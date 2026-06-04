@@ -1,26 +1,173 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Quant Terminal · tema ───────────────────────────────────────────
+   Grafite escuro, mono pros dados, verde néon = valor, âmbar = em
+   validação, vermelho = edge negativo. Tudo pensado como "mesa". */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: #08090c;
+  --color-panel: #0f1218;
+  --color-panel-2: #141822;
+  --color-line: #20262f;
+  --color-line-soft: #181d25;
+  --color-fg: #e7ecf3;
+  --color-muted: #8b95a3;
+  --color-faint: #5a6271;
+
+  --color-value: #25e08a; /* sinal de valor / positivo */
+  --color-warn: #ffb13d; /* em validação */
+  --color-bad: #ff5d63; /* edge negativo */
+  --color-cyan: #4fd6ff; /* acento frio / destaques */
 }
 
+:root {
+  --grid: rgba(255, 255, 255, 0.018);
+  --glow-value: 0 0 0 1px rgba(37, 224, 138, 0.35), 0 0 22px -6px rgba(37, 224, 138, 0.55);
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  /* textura de grade tipo papel milimetrado + leve vinheta */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    radial-gradient(120% 80% at 50% -10%, #11151d 0%, #08090c 55%);
+  background-size: 44px 44px, 44px 44px, 100% 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(37, 224, 138, 0.28);
+  color: #fff;
+}
+
+/* scrollbar fininha de terminal */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb {
+  background: #232a34;
+  border: 2px solid var(--color-bg);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: #2f3744; }
+
+/* ── primitivas ───────────────────────────────────────────────────── */
+
+.mono { font-family: var(--font-mono), monospace; }
+.display { font-family: var(--font-display), sans-serif; }
+
+/* rótulo de campo / overline tipográfico */
+.overline {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+/* painel = caixa da mesa */
+.panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 120px),
+    var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+}
+
+/* input/select de terminal */
 .input {
   width: 100%;
-  border: 1px solid #d4d4d4;
-  border-radius: 0.375rem;
-  padding: 0.5rem 0.625rem;
+  appearance: none;
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  padding: 0.6rem 0.7rem;
+  font-family: var(--font-mono), monospace;
   font-size: 0.875rem;
-  background: #fff;
+  color: var(--color-fg);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
+.input::placeholder { color: var(--color-faint); }
+.input:hover:not(:disabled) { border-color: #2c3440; }
 .input:focus {
-  outline: 2px solid #171717;
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--color-value);
+  box-shadow: 0 0 0 1px rgba(37, 224, 138, 0.4), 0 0 18px -8px rgba(37, 224, 138, 0.6);
+  background: #0a0e13;
+}
+.input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* select: setinha custom */
+select.input {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-muted) 50%),
+    linear-gradient(135deg, var(--color-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+select.input option { background: var(--color-panel-2); color: var(--color-fg); }
+
+/* botão primário = "EXECUTAR" */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
+  border-radius: 3px;
+  border: 1px solid var(--color-value);
+  color: #04130b;
+  background: var(--color-value);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 0 24px -10px rgba(37, 224, 138, 0.9);
+}
+.btn:hover:not(:disabled) { background: #38f29a; box-shadow: 0 0 30px -8px rgba(37, 224, 138, 1); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled {
+  background: transparent;
+  color: var(--color-faint);
+  border-color: var(--color-line);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* cursor piscando do header */
+.blink { animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* reveal escalonado do resultado */
+.reveal { animation: reveal 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* barra de scan no topo de painéis de sinal */
+.scan::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-value), transparent);
+  opacity: 0.7;
 }

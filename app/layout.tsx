@@ -1,26 +1,55 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Nav } from "@/components/Nav";
+
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-display",
+});
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
-  title: "odd-analyzer",
+  title: "odd-analyzer — value terminal",
   description: "Valor = modelo vs odd de-vig. Só sinaliza quando o modelo está à frente.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-neutral-50 text-neutral-900">
-        <header className="border-b border-neutral-200 bg-white">
-          <nav className="mx-auto max-w-5xl flex items-center gap-6 px-4 py-3">
-            <span className="font-semibold tracking-tight">⚽ odd-analyzer</span>
-            <Link href="/" className="text-sm text-neutral-600 hover:text-neutral-900">Pré-jogo</Link>
-            <Link href="/pos" className="text-sm text-neutral-600 hover:text-neutral-900">Pós-jogo</Link>
-          </nav>
+    <html lang="pt-BR" className={`${display.variable} ${mono.variable}`}>
+      <body className="min-h-screen">
+        <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2.5 w-2.5 items-center justify-center">
+                <span className="h-2.5 w-2.5 rounded-full bg-value shadow-[0_0_10px_2px_rgba(37,224,138,0.7)]" />
+              </span>
+              <span className="display text-[15px] font-extrabold tracking-tight text-fg">
+                odd<span className="text-value">/</span>analyzer
+              </span>
+              <span className="overline ml-1 hidden sm:inline">value terminal</span>
+            </div>
+            <Nav />
+            <span className="ml-auto hidden items-center gap-2 md:flex">
+              <span className="overline">copa 2026</span>
+              <span className="text-value">●</span>
+              <span className="overline text-faint">live<span className="blink text-value">_</span></span>
+            </span>
+          </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
-        <footer className="border-t border-neutral-200 py-3 text-center text-xs text-neutral-400">
-          Valor = prob. do modelo vs odd de-vig. Nunca aposta por “probabilidade alta”.
+
+        <main className="mx-auto w-full max-w-6xl px-5 py-8">{children}</main>
+
+        <footer className="mx-auto max-w-6xl px-5 pb-10 pt-6">
+          <div className="border-t border-line-soft pt-4 overline leading-relaxed text-faint">
+            valor = prob. do modelo &gt; prob. justa da casa sem margem (de-vig).
+            <br className="sm:hidden" /> nunca se aposta por “probabilidade alta”. a ia explica, nunca inventa o número.
+          </div>
         </footer>
       </body>
     </html>
