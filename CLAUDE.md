@@ -30,5 +30,5 @@ Para um jogo escolhido, o sistema compara a **probabilidade do nosso modelo** (c
 
 ## Rodar
 
-- Backend primeiro: no repo `odd-analyzer`, `cd ts && npm run dev` (porta 3001).
+- Backend primeiro: no repo `odd-analyzer`, `npm run dev` na raiz (porta 3001).
 - Front: `npm run dev` (porta 3000).
