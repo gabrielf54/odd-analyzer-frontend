@@ -1,5 +1,7 @@
 # CLAUDE.md — odd-analyzer-frontend
 
+> **Este é o FRONTEND.** Consome os dados (API REST) do backend, que fica em: `C:\Users\gabri\Documents\projects\odd-analyzer`
+
 Front Next.js do odd-analyzer. **Leia "Produto" primeiro** — define a mentalidade. O backend (Node/TS, repo `odd-analyzer`) expõe a API REST que este front consome.
 
 ## Produto — o que é (e o que o dono entende)
