@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { getLigas, getJogos, getResultado } from "@/lib/api";
 import { MERCADOS, type Liga, type Jogo, type ResultadoReal } from "@/lib/types";
-import { horaLocal } from "@/lib/date";
 import { LigaRail } from "@/components/LigaRail";
 import { JogosLista } from "@/components/JogosLista";
 import { MercadoChips } from "@/components/MercadoChips";
@@ -93,7 +92,7 @@ export default function PosJogo() {
                 {jogoSel.placar ? <span className="text-value">{jogoSel.placar}</span> : <span className="text-faint">×</span>}{" "}
                 {jogoSel.visitante}
               </h1>
-              {horaLocal(jogoSel.data) && <span className="overline">finalizado</span>}
+              <span className="overline">finalizado</span>
             </div>
 
             <Panel title="mercado">
