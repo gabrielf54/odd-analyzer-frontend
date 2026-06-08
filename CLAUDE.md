@@ -38,7 +38,7 @@ Para um jogo escolhido, o sistema compara a **probabilidade do nosso modelo** (c
 
 ### Botões
 
-- **Todo botão tem `cursor: pointer`.** Garantido global em `app/globals.css` (`button:not(:disabled)`); botão desabilitado usa `not-allowed`. Não precisa repetir classe por botão.
+- **Todo botão tem `cursor: pointer`.** Garantido global em `app/globals.css` (`button:not(:disabled) { cursor: pointer !important }` — o `!important` é necessário porque no Tailwind v4 o preflight vence a regra em botão simples). Botão desabilitado usa `not-allowed` (o `:not(:disabled)` preserva isso). **Não repetir `cursor-pointer` por botão.** Exceção: elementos clicáveis que não são `<button>` (ex.: `<summary>`) precisam da classe explícita.
 
 ## Rodar
 

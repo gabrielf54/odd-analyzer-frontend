@@ -11,6 +11,7 @@ import { filterMatches, type Period } from "@/lib/matchFilter";
 import { Lineup } from "@/components/Lineup";
 import { MarketChips } from "@/components/MarketChips";
 import { CandidatesTable } from "@/components/CandidatesTable";
+import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { AiVerdict } from "@/components/AiVerdict";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
@@ -61,6 +62,7 @@ export default function PreGame() {
         linha: Number(line), odd_over: Number(oddOver), odd_under: Number(oddUnder),
         player_ref: market.level === "player" && playerRef ? playerRef : null,
         league_id: leagueId,
+        diagnostico: true,
       });
       setResult(r);
     } catch (e) {
@@ -280,6 +282,11 @@ function Detail({
               <CandidatesTable candidates={result.candidatos} />
             </Panel>
           </div>
+
+          <DiagnosticsPanel
+            rejected={result.reprovados ?? []}
+            open={result.candidatos.length === 0}
+          />
         </div>
       )}
     </div>

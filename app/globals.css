@@ -29,9 +29,12 @@
   border-color: var(--color-line);
 }
 
-/* todo botão clicável usa cursor pointer (desabilitado = not-allowed) */
+/* todo botão clicável usa cursor pointer (desabilitado = not-allowed).
+   !important: no Tailwind v4 o preflight (layer base) às vezes vence esta
+   regra em botão simples — força aqui. :not(:disabled) preserva o
+   not-allowed do .btn:disabled, então não há regressão. */
 button:not(:disabled) {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
 html {

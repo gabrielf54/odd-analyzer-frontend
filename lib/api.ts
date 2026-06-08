@@ -33,6 +33,7 @@ export interface AnalyzeBody {
   usar_ia?: boolean;
   player_ref?: string | null;
   league_id?: string | number | null;
+  diagnostico?: boolean;
 }
 
 export const postAnalyze = (body: AnalyzeBody) =>

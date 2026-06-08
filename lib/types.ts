@@ -37,7 +37,18 @@ export interface Candidate {
 export interface AiBet { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
 export interface Ai { melhor_aposta: AiBet | null; outras: AiBet[]; alertas: string[]; }
 
-export interface AnalysisResult { jogo: string; candidatos: Candidate[]; ia: Ai; em_validacao: boolean; }
+// Diagnóstico: candidato que NÃO passou nos cortes + quais cortes falharam.
+// `motivos` espelha os códigos do backend (snake_case PT, como as demais chaves).
+export type CutReason = "edge" | "ev" | "titular" | "amostra";
+export interface RejectedCandidate extends Candidate { motivos: CutReason[]; }
+
+export interface AnalysisResult {
+  jogo: string;
+  candidatos: Candidate[];
+  reprovados: RejectedCandidate[];
+  ia: Ai;
+  em_validacao: boolean;
+}
 
 export type RealResult = Record<string, { valor_real: number; bateu: boolean }>;
 
