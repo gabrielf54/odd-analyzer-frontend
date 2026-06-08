@@ -43,6 +43,30 @@ describe("agruparPorData", () => {
   });
 });
 
+describe("agruparPorData — ordem dentro do dia", () => {
+  const agora = new Date("2026-06-07T08:00:00");
+
+  it("ordena jogos do mesmo dia por horário (mais cedo primeiro)", () => {
+    const jogos = [
+      base({ id: "tarde", data: "2026-06-07T21:00:00" }),
+      base({ id: "cedo",  data: "2026-06-07T16:00:00" }),
+      base({ id: "meio",  data: "2026-06-07T18:30:00" }),
+    ];
+    const grupos = agruparPorData(jogos, agora);
+    expect(grupos).toHaveLength(1);
+    expect(grupos[0].jogos.map((j) => j.id)).toEqual(["cedo", "meio", "tarde"]);
+  });
+
+  it("mantém ordem crescente entre dias", () => {
+    const jogos = [
+      base({ id: "amanha", data: "2026-06-08T16:00:00" }),
+      base({ id: "hoje",   data: "2026-06-07T16:00:00" }),
+    ];
+    const grupos = agruparPorData(jogos, agora);
+    expect(grupos.map((g) => g.jogos[0].id)).toEqual(["hoje", "amanha"]);
+  });
+});
+
 describe("horaLocal", () => {
   it("formata HH:MM", () => {
     expect(horaLocal(new Date(2026, 5, 7, 16, 5).toISOString())).toBe("16:05");

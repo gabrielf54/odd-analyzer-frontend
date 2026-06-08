@@ -45,6 +45,20 @@ export function agruparPorData(jogos: Jogo[], agora: Date = new Date()): GrupoDi
     map.get(chave)!.jogos.push(j);
   }
 
+  // Ordena jogos por horário dentro de cada dia (mais cedo primeiro).
+  for (const g of map.values()) {
+    g.jogos.sort((a, b) => {
+      const ta = a.data ? new Date(a.data).getTime() : NaN;
+      const tb = b.data ? new Date(b.data).getTime() : NaN;
+      const aRuim = isNaN(ta);
+      const bRuim = isNaN(tb);
+      if (aRuim && bRuim) return 0;
+      if (aRuim) return 1;
+      if (bRuim) return -1;
+      return ta - tb;
+    });
+  }
+
   return [...map.values()].sort((a, b) => {
     if (a.chave === SEM_DATA) return 1;
     if (b.chave === SEM_DATA) return -1;
