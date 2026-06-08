@@ -1,5 +1,6 @@
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
+import { InvestigationTrace } from "@/components/InvestigationTrace";
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const sig = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(3)}`;
@@ -120,6 +121,18 @@ export function CandidatesTable({ candidates }: { candidates: Candidate[] }) {
               {sig(c.ev)}
             </span>
           </div>
+
+          {c.trace && (
+            <details className="group/inv md:col-span-5">
+              <summary className="display inline-flex cursor-pointer items-center gap-1 text-[0.68rem] font-semibold text-faint hover:text-fg">
+                <span className="transition-transform group-open/inv:rotate-90">▸</span>
+                mostrar investigação
+              </summary>
+              <div className="mt-2">
+                <InvestigationTrace trace={c.trace} />
+              </div>
+            </details>
+          )}
         </div>
       ))}
     </div>

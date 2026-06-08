@@ -1,5 +1,6 @@
 import type { RejectedCandidate, CutReason } from "@/lib/types";
 import { Tag } from "@/components/ui";
+import { InvestigationTrace } from "@/components/InvestigationTrace";
 
 /* Diagnóstico: por que cada candidato NÃO passou nos cortes. Tira o sistema da
    caixa-preta — em vez de "lista vazia", mostra qual porta fechou pra cada um. */
@@ -80,6 +81,18 @@ export function DiagnosticsPanel({
                 bad={failed(c, "titular")}
               />
             </div>
+
+            {c.trace && (
+              <details className="group/inv sm:col-span-2">
+                <summary className="display inline-flex cursor-pointer items-center gap-1 text-[0.68rem] font-semibold text-faint hover:text-fg">
+                  <span className="transition-transform group-open/inv:rotate-90">▸</span>
+                  mostrar investigação
+                </summary>
+                <div className="mt-2">
+                  <InvestigationTrace trace={c.trace} />
+                </div>
+              </details>
+            )}
           </div>
         ))}
       </div>
