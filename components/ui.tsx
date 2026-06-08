@@ -81,7 +81,7 @@ export function Readout({
 }
 
 /* Caixa de erro padrão. */
-export function ErroBox({ msg }: { msg: string }) {
+export function ErrorBox({ msg }: { msg: string }) {
   return (
     <p className="rounded-sm border border-bad/40 bg-[rgba(255,93,99,0.08)] px-3 py-2 text-[0.72rem] text-bad">
       erro: {msg}

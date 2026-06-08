@@ -1,4 +1,4 @@
-import type { Candidato } from "@/lib/types";
+import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
@@ -6,10 +6,10 @@ const sig = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(3)}`;
 
 /* Barra dupla: modelo (verde, nosso número) sobreposto à casa de-vig
    (cinza, número justo dela). O vão verde = o edge, visualmente. */
-function ProbBars({ modelo, devig }: { modelo: number; devig: number }) {
-  const m = Math.min(100, modelo * 100);
+function ProbBars({ model, devig }: { model: number; devig: number }) {
+  const m = Math.min(100, model * 100);
   const d = Math.min(100, devig * 100);
-  const edgePos = modelo >= devig;
+  const edgePos = model >= devig;
   return (
     <div className="relative h-9 w-full overflow-hidden rounded-sm border border-line-soft bg-bg">
       {/* casa (de-vig) */}
@@ -36,15 +36,15 @@ function ProbBars({ modelo, devig }: { modelo: number; devig: number }) {
         style={{ left: `calc(${d}% - 0.5px)` }}
       />
       <div className="absolute inset-0 flex items-center justify-between px-2.5 text-[0.66rem] tabular-nums">
-        <span className="text-value">modelo {pct(modelo)}</span>
+        <span className="text-value">modelo {pct(model)}</span>
         <span className="text-muted">casa {pct(devig)}</span>
       </div>
     </div>
   );
 }
 
-export function CandidatosTabela({ candidatos }: { candidatos: Candidato[] }) {
-  if (!candidatos.length) {
+export function CandidatesTable({ candidates }: { candidates: Candidate[] }) {
+  if (!candidates.length) {
     return (
       <div className="rounded-sm border border-dashed border-line px-4 py-8 text-center">
         <p className="display text-base font-bold text-muted">nenhuma oportunidade clara</p>
@@ -67,7 +67,7 @@ export function CandidatosTabela({ candidatos }: { candidatos: Candidato[] }) {
         <span className="overline text-right">ev</span>
       </div>
 
-      {candidatos.map((c, i) => (
+      {candidates.map((c, i) => (
         <div
           key={i}
           className="reveal grid grid-cols-1 items-center gap-3 rounded-sm border border-line bg-panel px-3 py-3 transition-colors hover:border-[#2c3744] md:grid-cols-[2rem_1fr_minmax(220px,2fr)_5rem_5rem]"
@@ -103,7 +103,7 @@ export function CandidatosTabela({ candidatos }: { candidatos: Candidato[] }) {
           </div>
 
           {/* barras */}
-          <ProbBars modelo={c.prob_modelo} devig={c.prob_devig} />
+          <ProbBars model={c.prob_modelo} devig={c.prob_devig} />
 
           {/* edge */}
           <div className="flex items-center justify-between md:flex-col md:items-end md:gap-0.5">

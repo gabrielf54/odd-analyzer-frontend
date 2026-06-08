@@ -1,69 +1,70 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getLigas, getJogos, postAnalisar } from "@/lib/api";
-import { MERCADOS, type Liga, type Jogo, type AnaliseResult, type Mercado } from "@/lib/types";
-import { horaLocal } from "@/lib/date";
-import { LigaRail } from "@/components/LigaRail";
-import { JogosLista } from "@/components/JogosLista";
-import { JogosFiltro } from "@/components/JogosFiltro";
-import { filtrarJogos, type Periodo } from "@/lib/jogosFiltro";
-import { MercadoChips } from "@/components/MercadoChips";
-import { CandidatosTabela } from "@/components/CandidatosTabela";
-import { IaVeredito } from "@/components/IaVeredito";
-import { Panel, Field, Tag, ErroBox } from "@/components/ui";
+import { getLeagues, getMatches, getLineup, postAnalyze } from "@/lib/api";
+import { MARKETS, type League, type Match, type Lineup as LineupData, type AnalysisResult, type Market } from "@/lib/types";
+import { localTime } from "@/lib/date";
+import { LeagueRail } from "@/components/LeagueRail";
+import { MatchList } from "@/components/MatchList";
+import { MatchFilter } from "@/components/MatchFilter";
+import { filterMatches, type Period } from "@/lib/matchFilter";
+import { Lineup } from "@/components/Lineup";
+import { MarketChips } from "@/components/MarketChips";
+import { CandidatesTable } from "@/components/CandidatesTable";
+import { AiVerdict } from "@/components/AiVerdict";
+import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
-export default function PreJogo() {
-  const [ligas, setLigas] = useState<Liga[]>([]);
-  const [loadingLigas, setLoadingLigas] = useState(true);
-  const [ligaId, setLigaId] = useState("");
-  const [jogos, setJogos] = useState<Jogo[]>([]);
-  const [loadingJogos, setLoadingJogos] = useState(false);
-  const [jogoSel, setJogoSel] = useState<Jogo | null>(null);
+export default function PreGame() {
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [loadingLeagues, setLoadingLeagues] = useState(true);
+  const [leagueId, setLeagueId] = useState("");
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [marketKey, setMarketKey] = useState("sot");
-  const [linha, setLinha] = useState("1.5");
+  const [line, setLine] = useState("1.5");
   const [oddOver, setOddOver] = useState("1.90");
   const [oddUnder, setOddUnder] = useState("1.90");
   const [playerRef, setPlayerRef] = useState("");
-  const [result, setResult] = useState<AnaliseResult | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getLigas()
-      .then(setLigas)
-      .catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"))
-      .finally(() => setLoadingLigas(false));
+    getLeagues()
+      .then(setLeagues)
+      .catch((e) => setError(e instanceof Error ? e.message : "erro inesperado"))
+      .finally(() => setLoadingLeagues(false));
   }, []);
 
   useEffect(() => {
-    if (!ligaId) return;
-    setJogos([]); setJogoSel(null); setResult(null); setErro(""); setLoadingJogos(true);
-    getJogos(ligaId, "notstarted")
-      .then(setJogos)
-      .catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"))
-      .finally(() => setLoadingJogos(false));
-  }, [ligaId]);
+    if (!leagueId) return;
+    setMatches([]); setSelectedMatch(null); setResult(null); setError(""); setLoadingMatches(true);
+    getMatches(leagueId, "notstarted")
+      .then(setMatches)
+      .catch((e) => setError(e instanceof Error ? e.message : "erro inesperado"))
+      .finally(() => setLoadingMatches(false));
+  }, [leagueId]);
 
-  const mercado = MERCADOS.find((m) => m.key === marketKey)!;
+  const market = MARKETS.find((m) => m.key === marketKey)!;
 
-  function voltar() {
-    setJogoSel(null); setResult(null); setErro("");
+  function goBack() {
+    setSelectedMatch(null); setResult(null); setError("");
   }
 
-  async function analisar() {
-    if (!jogoSel) return;
-    setErro(""); setResult(null); setLoading(true);
+  async function analyze() {
+    if (!selectedMatch) return;
+    setError(""); setResult(null); setLoading(true);
     try {
-      const r = await postAnalisar({
-        event_id: String(jogoSel.id), market_key: marketKey,
-        linha: Number(linha), odd_over: Number(oddOver), odd_under: Number(oddUnder),
-        player_ref: mercado.nivel === "jogador" && playerRef ? playerRef : null,
-        league_id: ligaId,
+      const r = await postAnalyze({
+        event_id: String(selectedMatch.id), market_key: marketKey,
+        linha: Number(line), odd_over: Number(oddOver), odd_under: Number(oddUnder),
+        player_ref: market.level === "player" && playerRef ? playerRef : null,
+        league_id: leagueId,
       });
       setResult(r);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "erro inesperado");
+      setError(e instanceof Error ? e.message : "erro inesperado");
     } finally {
       setLoading(false);
     }
@@ -72,22 +73,22 @@ export default function PreJogo() {
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LigaRail ligas={ligas} ativa={ligaId} onSelect={setLigaId} loading={loadingLigas} />
+        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeagueId} loading={loadingLeagues} />
       </aside>
 
       <div className="min-w-0">
-        {!jogoSel ? (
-          <Browse ligaId={ligaId} jogos={jogos} loading={loadingJogos} erro={erro} onSelect={setJogoSel} />
+        {!selectedMatch ? (
+          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error} onSelect={setSelectedMatch} />
         ) : (
-          <Detalhe
-            jogo={jogoSel}
-            marketKey={marketKey} setMarketKey={setMarketKey} mercado={mercado}
-            linha={linha} setLinha={setLinha}
+          <Detail
+            match={selectedMatch}
+            marketKey={marketKey} setMarketKey={setMarketKey} market={market}
+            line={line} setLine={setLine}
             oddOver={oddOver} setOddOver={setOddOver}
             oddUnder={oddUnder} setOddUnder={setOddUnder}
             playerRef={playerRef} setPlayerRef={setPlayerRef}
-            result={result} loading={loading} erro={erro}
-            onAnalisar={analisar} onVoltar={voltar}
+            result={result} loading={loading} error={error}
+            onAnalyze={analyze} onBack={goBack}
           />
         )}
       </div>
@@ -96,24 +97,24 @@ export default function PreJogo() {
 }
 
 function Browse({
-  ligaId, jogos, loading, erro, onSelect,
+  leagueId, matches, loading, error, onSelect,
 }: {
-  ligaId: string; jogos: Jogo[]; loading: boolean; erro: string; onSelect: (j: Jogo) => void;
+  leagueId: string; matches: Match[]; loading: boolean; error: string; onSelect: (j: Match) => void;
 }) {
-  const [busca, setBusca] = useState("");
-  const [periodo, setPeriodo] = useState<Periodo>("todos");
+  const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<Period>("all");
 
-  const filtrados = useMemo(
-    () => filtrarJogos(jogos, { busca, periodo }),
-    [jogos, busca, periodo],
+  const filtered = useMemo(
+    () => filterMatches(matches, { search, period }),
+    [matches, search, period],
   );
 
-  const filtroAtivo = busca.trim() !== "" || periodo !== "todos";
-  const mostrarBarra = !!ligaId && !loading && jogos.length > 0;
+  const filterActive = search.trim() !== "" || period !== "all";
+  const showBar = !!leagueId && !loading && matches.length > 0;
 
-  function limpar() {
-    setBusca("");
-    setPeriodo("todos");
+  function clear() {
+    setSearch("");
+    setPeriod("all");
   }
 
   return (
@@ -126,34 +127,34 @@ function Browse({
         </p>
       </div>
 
-      {erro && <ErroBox msg={erro} />}
+      {error && <ErrorBox msg={error} />}
 
-      {!ligaId ? (
-        <Vazio titulo="escolha uma liga" texto="selecione uma liga à esquerda para ver os jogos não iniciados." />
+      {!leagueId ? (
+        <Empty title="escolha uma liga" text="selecione uma liga à esquerda para ver os jogos não iniciados." />
       ) : loading ? (
         <p className="mono text-sm text-value">carregando jogos<span className="blink">_</span></p>
       ) : (
         <>
-          {mostrarBarra && (
-            <JogosFiltro
-              busca={busca} setBusca={setBusca}
-              periodo={periodo} setPeriodo={setPeriodo}
+          {showBar && (
+            <MatchFilter
+              search={search} setSearch={setSearch}
+              period={period} setPeriod={setPeriod}
             />
           )}
 
-          {filtroAtivo && jogos.length > 0 && (
+          {filterActive && matches.length > 0 && (
             <div className="flex items-center justify-between text-[0.72rem] text-faint">
-              <span>{filtrados.length} de {jogos.length} jogos</span>
-              <button onClick={limpar} className="transition-colors hover:text-fg">limpar</button>
+              <span>{filtered.length} de {matches.length} jogos</span>
+              <button onClick={clear} className="transition-colors hover:text-fg">limpar</button>
             </div>
           )}
 
-          {jogos.length > 0 && filtrados.length === 0 ? (
+          {matches.length > 0 && filtered.length === 0 ? (
             <div className="rounded-sm border border-dashed border-line px-4 py-10 text-center">
               <p className="text-[0.78rem] text-muted">nenhum jogo bate o filtro — ajuste a busca ou o período.</p>
             </div>
           ) : (
-            <JogosLista jogos={filtrados} variante="pre" onSelect={onSelect} />
+            <MatchList matches={filtered} variant="pre" onSelect={onSelect} />
           )}
         </>
       )}
@@ -161,58 +162,100 @@ function Browse({
   );
 }
 
-function Detalhe({
-  jogo, marketKey, setMarketKey, mercado, linha, setLinha, oddOver, setOddOver,
-  oddUnder, setOddUnder, playerRef, setPlayerRef, result, loading, erro, onAnalisar, onVoltar,
+function Detail({
+  match, marketKey, setMarketKey, market, line, setLine, oddOver, setOddOver,
+  oddUnder, setOddUnder, playerRef, setPlayerRef, result, loading, error, onAnalyze, onBack,
 }: {
-  jogo: Jogo;
-  marketKey: string; setMarketKey: (k: string) => void; mercado: Mercado;
-  linha: string; setLinha: (v: string) => void;
+  match: Match;
+  marketKey: string; setMarketKey: (k: string) => void; market: Market;
+  line: string; setLine: (v: string) => void;
   oddOver: string; setOddOver: (v: string) => void;
   oddUnder: string; setOddUnder: (v: string) => void;
   playerRef: string; setPlayerRef: (v: string) => void;
-  result: AnaliseResult | null; loading: boolean; erro: string;
-  onAnalisar: () => void; onVoltar: () => void;
+  result: AnalysisResult | null; loading: boolean; error: string;
+  onAnalyze: () => void; onBack: () => void;
 }) {
-  const hora = horaLocal(jogo.data);
+  const time = localTime(match.data);
+
+  const [lineup, setLineup] = useState<LineupData | null>(null);
+  const hasPlayers =
+    !!lineup && lineup.home.jogadores.length + lineup.away.jogadores.length > 0;
+  const [loadingLineup, setLoadingLineup] = useState(true);
+  const [lineupError, setLineupError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    setLineup(null); setLineupError(""); setLoadingLineup(true);
+    getLineup(match.id)
+      .then((e) => { if (alive) setLineup(e); })
+      .catch((e) => { if (alive) setLineupError(e instanceof Error ? e.message : "erro inesperado"); })
+      .finally(() => { if (alive) setLoadingLineup(false); });
+    return () => { alive = false; };
+  }, [match.id]);
+
   return (
     <div className="flex flex-col gap-4">
-      <button onClick={onVoltar} className="overline self-start transition-colors hover:text-fg">
+      <button onClick={onBack} className="overline self-start transition-colors hover:text-fg">
         ‹ voltar aos jogos
       </button>
 
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
         <h1 className="display text-2xl font-extrabold leading-none text-fg">
-          {jogo.mandante} <span className="text-faint">×</span> {jogo.visitante}
+          {match.mandante} <span className="text-faint">×</span> {match.visitante}
         </h1>
-        {hora && <span className="overline">{hora}</span>}
+        {time && <span className="overline">{time}</span>}
       </div>
+
+      <Lineup lineup={lineup} loading={loadingLineup} error={lineupError} onPickPlayer={setPlayerRef} />
 
       <Panel title="mercado">
         <div className="flex flex-col gap-3.5">
-          <MercadoChips mercados={MERCADOS} ativo={marketKey} onSelect={setMarketKey} />
+          <MarketChips markets={MARKETS} active={marketKey} onSelect={setMarketKey} />
 
-          {mercado.nivel === "jogador" && (
-            <Field label="jogador" hint="vazio = varre o elenco inteiro">
-              <input className="input" value={playerRef} onChange={(e) => setPlayerRef(e.target.value)} placeholder="ex.: Messi" />
+          {market.level === "player" && (
+            <Field
+              label="jogador"
+              hint={
+                playerRef
+                  ? "clique no × para varrer o elenco inteiro"
+                  : hasPlayers
+                  ? "clique num nome na escalação acima"
+                  : "vazio = varre o elenco inteiro"
+              }
+            >
+              {playerRef ? (
+                <button
+                  type="button"
+                  onClick={() => setPlayerRef("")}
+                  title="limpar — varrer o elenco inteiro"
+                  className="input flex w-full items-center justify-between text-left transition-colors hover:border-line"
+                >
+                  <span className="truncate text-fg">{playerRef}</span>
+                  <span className="ml-2 shrink-0 text-faint">×</span>
+                </button>
+              ) : (
+                <div className="input flex items-center text-faint">
+                  {hasPlayers ? "selecione na escalação ↑" : "elenco inteiro"}
+                </div>
+              )}
             </Field>
           )}
 
           <div className="grid grid-cols-3 gap-2.5">
-            <Field label="linha"><input className="input" value={linha} onChange={(e) => setLinha(e.target.value)} /></Field>
+            <Field label="linha"><input className="input" value={line} onChange={(e) => setLine(e.target.value)} /></Field>
             <Field label="odd over"><input className="input" value={oddOver} onChange={(e) => setOddOver(e.target.value)} /></Field>
             <Field label="odd under"><input className="input" value={oddUnder} onChange={(e) => setOddUnder(e.target.value)} /></Field>
           </div>
 
-          <button onClick={onAnalisar} disabled={loading} className="btn w-full justify-center">
+          <button onClick={onAnalyze} disabled={loading} className="btn w-full justify-center">
             {loading ? "analisando…" : "▸ analisar"}
           </button>
 
-          {erro && <ErroBox msg={erro} />}
+          {error && <ErrorBox msg={error} />}
         </div>
       </Panel>
 
-      {loading && <Carregando />}
+      {loading && <Loading />}
 
       {result && (
         <div className="flex flex-col gap-4">
@@ -228,13 +271,13 @@ function Detalhe({
 
           <div className="reveal">
             <Panel title="veredito da ia" glow badge={<Tag tone="muted">explica · não inventa</Tag>}>
-              <IaVeredito ia={result.ia} />
+              <AiVerdict ia={result.ia} />
             </Panel>
           </div>
 
           <div className="reveal" style={{ animationDelay: "60ms" }}>
             <Panel title={`candidatos · ${result.candidatos.length}`} badge={<Tag tone="value">edge &gt; 0</Tag>}>
-              <CandidatosTabela candidatos={result.candidatos} />
+              <CandidatesTable candidates={result.candidatos} />
             </Panel>
           </div>
         </div>
@@ -243,19 +286,19 @@ function Detalhe({
   );
 }
 
-function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
+function Empty({ title, text }: { title: string; text: string }) {
   return (
     <Panel className="grid min-h-[360px] place-items-center">
       <div className="text-center">
         <div className="display text-5xl font-extrabold text-line">⌖</div>
-        <p className="display mt-3 text-lg font-bold text-muted">{titulo}</p>
-        <p className="mx-auto mt-1.5 max-w-xs text-[0.72rem] leading-relaxed text-faint">{texto}</p>
+        <p className="display mt-3 text-lg font-bold text-muted">{title}</p>
+        <p className="mx-auto mt-1.5 max-w-xs text-[0.72rem] leading-relaxed text-faint">{text}</p>
       </div>
     </Panel>
   );
 }
 
-function Carregando() {
+function Loading() {
   return (
     <Panel className="grid min-h-[260px] place-items-center">
       <div className="text-center">

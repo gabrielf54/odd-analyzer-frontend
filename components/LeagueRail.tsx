@@ -1,26 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Liga } from "@/lib/types";
+import type { League } from "@/lib/types";
 
-export function LigaRail({
-  ligas,
-  ativa,
+export function LeagueRail({
+  leagues,
+  active,
   onSelect,
   loading,
 }: {
-  ligas: Liga[];
-  ativa: string;
+  leagues: League[];
+  active: string;
   onSelect: (id: string) => void;
   loading: boolean;
 }) {
   const [q, setQ] = useState("");
 
-  const filtradas = useMemo(() => {
-    const termo = q.trim().toLowerCase();
-    if (!termo) return ligas;
-    return ligas.filter((l) => l.nome.toLowerCase().includes(termo));
-  }, [ligas, q]);
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return leagues;
+    return leagues.filter((l) => l.nome.toLowerCase().includes(term));
+  }, [leagues, q]);
 
   return (
     <nav className="flex flex-col gap-2">
@@ -35,13 +35,13 @@ export function LigaRail({
       />
 
       <div className="flex max-h-[calc(100vh-13rem)] flex-col gap-0.5 overflow-y-auto pr-1">
-        {ligas.length === 0 ? (
+        {leagues.length === 0 ? (
           <span className="px-1 text-[0.72rem] text-faint">{loading ? "carregando…" : "sem ligas"}</span>
-        ) : filtradas.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <span className="px-1 text-[0.72rem] text-faint">nada para “{q}”.</span>
         ) : (
-          filtradas.map((l) => {
-            const on = String(l.id) === ativa;
+          filtered.map((l) => {
+            const on = String(l.id) === active;
             return (
               <button
                 key={l.id}

@@ -29,6 +29,11 @@
   border-color: var(--color-line);
 }
 
+/* todo botão clicável usa cursor pointer (desabilitado = not-allowed) */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 html {
   color-scheme: dark;
 }

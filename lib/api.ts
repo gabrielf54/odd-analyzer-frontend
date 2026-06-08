@@ -1,5 +1,5 @@
 // Único ponto que fala com o backend. Nenhum componente faz fetch solto.
-import type { Liga, Jogo, Escalacao, AnaliseResult, ResultadoReal } from "./types";
+import type { League, Match, Lineup, AnalysisResult, RealResult } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -16,15 +16,15 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export const getLigas = () => req<Liga[]>("/ligas");
+export const getLeagues = () => req<League[]>("/ligas");
 
-export const getJogos = (ligaId: string | number, status: "finished" | "notstarted") =>
-  req<Jogo[]>(`/ligas/${ligaId}/jogos?status=${status}`);
+export const getMatches = (leagueId: string | number, status: "finished" | "notstarted") =>
+  req<Match[]>(`/ligas/${leagueId}/jogos?status=${status}`);
 
-export const getEscalacao = (eventId: string | number) =>
-  req<Escalacao>(`/jogos/${eventId}/escalacao`);
+export const getLineup = (eventId: string | number) =>
+  req<Lineup>(`/jogos/${eventId}/escalacao`);
 
-export interface AnalisarBody {
+export interface AnalyzeBody {
   event_id: string;
   market_key: string;
   linha?: number;
@@ -35,8 +35,8 @@ export interface AnalisarBody {
   league_id?: string | number | null;
 }
 
-export const postAnalisar = (body: AnalisarBody) =>
-  req<AnaliseResult>("/analisar", { method: "POST", body: JSON.stringify(body) });
+export const postAnalyze = (body: AnalyzeBody) =>
+  req<AnalysisResult>("/analisar", { method: "POST", body: JSON.stringify(body) });
 
-export const getResultado = (eventId: string | number, market: string, linha: number) =>
-  req<ResultadoReal>(`/jogos/${eventId}/resultado?market=${market}&linha=${linha}`);
+export const getResult = (eventId: string | number, market: string, line: number) =>
+  req<RealResult>(`/jogos/${eventId}/resultado?market=${market}&linha=${line}`);

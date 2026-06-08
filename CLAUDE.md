@@ -30,6 +30,16 @@ Para um jogo escolhido, o sistema compara a **probabilidade do nosso modelo** (c
 - Visual **simples e limpo** (Tailwind, sem libs pesadas). Foco em funcionar ponta-a-ponta.
 - 2 telas: **Pré-jogo** (`/`) liga→jogo→mercado→análise; **Pós-jogo** (`/pos`) confere resultado real.
 
+### Nomenclatura — código em inglês
+
+- **Identificadores em inglês.** Nomes de **arquivos, variáveis, funções, componentes, tipos/interfaces** sempre em inglês (`MatchCard.tsx`, `filterMatches`, `LeagueRail`). Nada de PT-BR em código (`Escalacao.tsx`, `agruparPorData` → `Lineup.tsx`, `groupByDay`).
+- **Exceção — chaves da API ficam snake_case PT.** Campos que espelham o JSON do backend (`prob_devig`, `market_type`, `mandante`, `jogadores`, `amostra_jogos`…) **não traduzir** — o nome do tipo é inglês (`interface Match`), mas os campos mantêm o nome do backend.
+- **Texto de UI fica em português.** Strings visíveis pro dono (labels, mensagens, placeholders) continuam em PT-BR — é a língua do produto. Só os *identificadores* viram inglês.
+
+### Botões
+
+- **Todo botão tem `cursor: pointer`.** Garantido global em `app/globals.css` (`button:not(:disabled)`); botão desabilitado usa `not-allowed`. Não precisa repetir classe por botão.
+
 ## Rodar
 
 - Backend primeiro: no repo `odd-analyzer`, `npm run dev` na raiz (porta 3001).

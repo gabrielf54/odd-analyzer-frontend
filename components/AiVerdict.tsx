@@ -1,10 +1,10 @@
-import type { Ia } from "@/lib/types";
+import type { Ai } from "@/lib/types";
 import { Tag } from "@/components/ui";
 
 const confTone = (c: string) =>
   /alta/i.test(c) ? "value" : /baixa/i.test(c) ? "bad" : "warn";
 
-export function IaVeredito({ ia }: { ia: Ia }) {
+export function AiVerdict({ ia }: { ia: Ai }) {
   const best = ia?.melhor_aposta;
   return (
     <div className="flex flex-col gap-3">

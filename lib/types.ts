@@ -1,7 +1,7 @@
-// Espelham o JSON do backend (chaves snake_case PT).
-export interface Liga { id: number | string; nome: string; pais?: string; }
+// Espelham o JSON do backend (chaves snake_case PT — não traduzir).
+export interface League { id: number | string; nome: string; pais?: string; }
 
-export interface Jogo {
+export interface Match {
   id: string | number;
   mandante: string;
   visitante: string;
@@ -11,12 +11,12 @@ export interface Jogo {
   league_id: number | string;
 }
 
-export interface Jogador { id: string; name: string; team_id: string; posicao: string; }
+export interface Player { id: string; name: string; team_id: string; posicao: string; }
 
-export interface LadoEscalacao { team_name: string; team_id: string; jogadores: Jogador[]; }
-export interface Escalacao { origem: string; home: LadoEscalacao; away: LadoEscalacao; }
+export interface LineupSide { team_name: string; team_id: string; jogadores: Player[]; }
+export interface Lineup { origem: string; home: LineupSide; away: LineupSide; }
 
-export interface Candidato {
+export interface Candidate {
   jogador: string;
   player_id: string | null;
   linha: number;
@@ -34,21 +34,21 @@ export interface Candidato {
   market_type: string;
 }
 
-export interface IaAposta { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
-export interface Ia { melhor_aposta: IaAposta | null; outras: IaAposta[]; alertas: string[]; }
+export interface AiBet { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
+export interface Ai { melhor_aposta: AiBet | null; outras: AiBet[]; alertas: string[]; }
 
-export interface AnaliseResult { jogo: string; candidatos: Candidato[]; ia: Ia; em_validacao: boolean; }
+export interface AnalysisResult { jogo: string; candidatos: Candidate[]; ia: Ai; em_validacao: boolean; }
 
-export type ResultadoReal = Record<string, { valor_real: number; bateu: boolean }>;
+export type RealResult = Record<string, { valor_real: number; bateu: boolean }>;
 
-export interface Mercado { key: string; label: string; nivel: "jogador" | "partida"; }
+export interface Market { key: string; label: string; level: "player" | "match"; }
 
 // Espelha o registry do backend (model/markets). Usado só p/ popular o select.
-export const MERCADOS: Mercado[] = [
-  { key: "sot", label: "Chutes a Gol (SOT)", nivel: "jogador" },
-  { key: "finalizacoes", label: "Finalizações Totais", nivel: "jogador" },
-  { key: "desarmes", label: "Desarmes", nivel: "jogador" },
-  { key: "escanteios", label: "Escanteios (Total)", nivel: "partida" },
-  { key: "gols", label: "Gols (Total)", nivel: "partida" },
-  { key: "vitoria", label: "Resultado (1X2)", nivel: "partida" },
+export const MARKETS: Market[] = [
+  { key: "sot", label: "Chutes a Gol (SOT)", level: "player" },
+  { key: "finalizacoes", label: "Finalizações Totais", level: "player" },
+  { key: "desarmes", label: "Desarmes", level: "player" },
+  { key: "escanteios", label: "Escanteios (Total)", level: "match" },
+  { key: "gols", label: "Gols (Total)", level: "match" },
+  { key: "vitoria", label: "Resultado (1X2)", level: "match" },
 ];
