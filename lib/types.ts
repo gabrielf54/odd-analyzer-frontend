@@ -16,6 +16,23 @@ export interface Player { id: string; name: string; team_id: string; posicao: st
 export interface LineupSide { team_name: string; team_id: string; jogadores: Player[]; }
 export interface Lineup { origem: string; home: LineupSide; away: LineupSide; }
 
+// Rastro investigativo (só vem sob diagnostico:true). snake_case PT espelhando o backend.
+export interface TraceStep {
+  passo: string;
+  titulo: string;
+  formula: string;
+  entradas: Record<string, number | string>;
+  saida: number;
+  frase: string;
+}
+export interface Trace {
+  alvo: string;
+  linha: number;
+  precisa: string;
+  passos: TraceStep[];
+  veredito_leigo: string;
+}
+
 export interface Candidate {
   jogador: string;
   player_id: string | null;
@@ -32,6 +49,7 @@ export interface Candidate {
   concedido_adversario: string;
   incerteza: string;
   market_type: string;
+  trace?: Trace;
 }
 
 export interface AiBet { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
