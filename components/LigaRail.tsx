@@ -4,16 +4,18 @@ export function LigaRail({
   ligas,
   ativa,
   onSelect,
+  loading,
 }: {
   ligas: Liga[];
   ativa: string;
   onSelect: (id: string) => void;
+  loading: boolean;
 }) {
   return (
     <nav className="flex flex-col gap-0.5">
       <span className="overline mb-2 block">ligas</span>
       {ligas.length === 0 && (
-        <span className="text-[0.72rem] text-faint">carregando…</span>
+        <span className="text-[0.72rem] text-faint">{loading ? "carregando…" : "sem ligas"}</span>
       )}
       {ligas.map((l) => {
         const on = String(l.id) === ativa;

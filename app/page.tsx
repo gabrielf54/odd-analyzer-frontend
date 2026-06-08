@@ -9,10 +9,11 @@ import { JogosLista } from "@/components/JogosLista";
 import { MercadoChips } from "@/components/MercadoChips";
 import { CandidatosTabela } from "@/components/CandidatosTabela";
 import { IaVeredito } from "@/components/IaVeredito";
-import { Panel, Field, Tag } from "@/components/ui";
+import { Panel, Field, Tag, ErroBox } from "@/components/ui";
 
 export default function PreJogo() {
   const [ligas, setLigas] = useState<Liga[]>([]);
+  const [loadingLigas, setLoadingLigas] = useState(true);
   const [ligaId, setLigaId] = useState("");
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loadingJogos, setLoadingJogos] = useState(false);
@@ -27,7 +28,10 @@ export default function PreJogo() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    getLigas().then(setLigas).catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"));
+    getLigas()
+      .then(setLigas)
+      .catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"))
+      .finally(() => setLoadingLigas(false));
   }, []);
 
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function PreJogo() {
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LigaRail ligas={ligas} ativa={ligaId} onSelect={setLigaId} />
+        <LigaRail ligas={ligas} ativa={ligaId} onSelect={setLigaId} loading={loadingLigas} />
       </aside>
 
       <div className="min-w-0">
@@ -222,10 +226,3 @@ function Carregando() {
   );
 }
 
-function ErroBox({ msg }: { msg: string }) {
-  return (
-    <p className="rounded-sm border border-bad/40 bg-[rgba(255,93,99,0.08)] px-3 py-2 text-[0.72rem] text-bad">
-      erro: {msg}
-    </p>
-  );
-}

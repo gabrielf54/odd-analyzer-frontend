@@ -6,12 +6,13 @@ import { MERCADOS, type Liga, type Jogo, type ResultadoReal } from "@/lib/types"
 import { LigaRail } from "@/components/LigaRail";
 import { JogosLista } from "@/components/JogosLista";
 import { MercadoChips } from "@/components/MercadoChips";
-import { Panel, Field, Tag } from "@/components/ui";
+import { Panel, Field, Tag, ErroBox } from "@/components/ui";
 
 const MERCADOS_JOGADOR = MERCADOS.filter((m) => m.nivel === "jogador");
 
 export default function PosJogo() {
   const [ligas, setLigas] = useState<Liga[]>([]);
+  const [loadingLigas, setLoadingLigas] = useState(true);
   const [ligaId, setLigaId] = useState("");
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loadingJogos, setLoadingJogos] = useState(false);
@@ -23,7 +24,10 @@ export default function PosJogo() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    getLigas().then(setLigas).catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"));
+    getLigas()
+      .then(setLigas)
+      .catch((e) => setErro(e instanceof Error ? e.message : "erro inesperado"))
+      .finally(() => setLoadingLigas(false));
   }, []);
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export default function PosJogo() {
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LigaRail ligas={ligas} ativa={ligaId} onSelect={setLigaId} />
+        <LigaRail ligas={ligas} ativa={ligaId} onSelect={setLigaId} loading={loadingLigas} />
       </aside>
 
       <div className="min-w-0">
@@ -164,10 +168,3 @@ function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
   );
 }
 
-function ErroBox({ msg }: { msg: string }) {
-  return (
-    <p className="rounded-sm border border-bad/40 bg-[rgba(255,93,99,0.08)] px-3 py-2 text-[0.72rem] text-bad">
-      erro: {msg}
-    </p>
-  );
-}
