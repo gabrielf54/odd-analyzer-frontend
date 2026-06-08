@@ -46,7 +46,7 @@ export function LigaRail({
               <button
                 key={l.id}
                 onClick={() => onSelect(String(l.id))}
-                className={`truncate rounded-sm border-l-2 px-2.5 py-1.5 text-left text-[0.78rem] transition-colors ${
+                className={`shrink-0 truncate rounded-sm border-l-2 px-2.5 py-1.5 text-left text-[0.78rem] transition-colors ${
                   on
                     ? "border-value bg-panel-2 text-fg"
                     : "border-transparent text-muted hover:bg-panel hover:text-fg"
