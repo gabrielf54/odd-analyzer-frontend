@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getLigas, getJogos, postAnalisar } from "@/lib/api";
 import { MERCADOS, type Liga, type Jogo, type AnaliseResult, type Mercado } from "@/lib/types";
 import { horaLocal } from "@/lib/date";
 import { LigaRail } from "@/components/LigaRail";
 import { JogosLista } from "@/components/JogosLista";
+import { JogosFiltro } from "@/components/JogosFiltro";
+import { filtrarJogos, type Periodo } from "@/lib/jogosFiltro";
 import { MercadoChips } from "@/components/MercadoChips";
 import { CandidatosTabela } from "@/components/CandidatosTabela";
 import { IaVeredito } from "@/components/IaVeredito";
@@ -98,6 +100,22 @@ function Browse({
 }: {
   ligaId: string; jogos: Jogo[]; loading: boolean; erro: string; onSelect: (j: Jogo) => void;
 }) {
+  const [busca, setBusca] = useState("");
+  const [periodo, setPeriodo] = useState<Periodo>("todos");
+
+  const filtrados = useMemo(
+    () => filtrarJogos(jogos, { busca, periodo }),
+    [jogos, busca, periodo],
+  );
+
+  const filtroAtivo = busca.trim() !== "" || periodo !== "todos";
+  const mostrarBarra = !!ligaId && !loading && jogos.length > 0;
+
+  function limpar() {
+    setBusca("");
+    setPeriodo("todos");
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -115,7 +133,29 @@ function Browse({
       ) : loading ? (
         <p className="mono text-sm text-value">carregando jogos<span className="blink">_</span></p>
       ) : (
-        <JogosLista jogos={jogos} variante="pre" onSelect={onSelect} />
+        <>
+          {mostrarBarra && (
+            <JogosFiltro
+              busca={busca} setBusca={setBusca}
+              periodo={periodo} setPeriodo={setPeriodo}
+            />
+          )}
+
+          {filtroAtivo && jogos.length > 0 && (
+            <div className="flex items-center justify-between text-[0.72rem] text-faint">
+              <span>{filtrados.length} de {jogos.length} jogos</span>
+              <button onClick={limpar} className="transition-colors hover:text-fg">limpar</button>
+            </div>
+          )}
+
+          {jogos.length > 0 && filtrados.length === 0 ? (
+            <div className="rounded-sm border border-dashed border-line px-4 py-10 text-center">
+              <p className="text-[0.78rem] text-muted">nenhum jogo bate o filtro — ajuste a busca ou o período.</p>
+            </div>
+          ) : (
+            <JogosLista jogos={filtrados} variante="pre" onSelect={onSelect} />
+          )}
+        </>
       )}
     </div>
   );
@@ -225,4 +265,3 @@ function Carregando() {
     </Panel>
   );
 }
-
