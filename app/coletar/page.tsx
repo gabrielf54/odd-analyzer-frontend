@@ -9,6 +9,7 @@ import {
 } from "@/lib/types";
 import { localTime } from "@/lib/date";
 import { parsePastedOdds, countByMarket } from "@/lib/manualOdds";
+import { copyText } from "@/lib/clipboard";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
 import { CandidatesTable } from "@/components/CandidatesTable";
@@ -236,22 +237,32 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
 }
 
 function PromptCopier({ eventId }: { eventId: string }) {
-  const [copied, setCopied] = useState("");
+  const [active, setActive] = useState<{ market: string; label: string; prompt: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
 
-  async function copy(market: string) {
-    setErr(""); setBusy(market);
+  // Busca o prompt e já tenta copiar. Se a cópia automática falhar (foco/permissão),
+  // o textarea abaixo fica visível pra cópia manual — o prompt nunca se perde.
+  async function load(market: string, label: string) {
+    setErr(""); setBusy(market); setCopied(false);
     try {
       const { prompt } = await getOddsPrompt(eventId, market);
-      await navigator.clipboard.writeText(prompt);
-      setCopied(market);
-      setTimeout(() => setCopied(""), 1800);
+      setActive({ market, label, prompt });
+      const ok = await copyText(prompt);
+      setCopied(ok);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "erro ao gerar prompt");
     } finally {
       setBusy("");
     }
+  }
+
+  // Botão de cópia manual: roda dentro do clique, com o texto já em memória
+  // (sem gap de fetch) → confiável mesmo quando a cópia automática falha.
+  async function copyAgain() {
+    if (!active) return;
+    setCopied(await copyText(active.prompt));
   }
 
   return (
@@ -266,18 +277,49 @@ function PromptCopier({ eventId }: { eventId: string }) {
             key={m.key}
             type="button"
             disabled={busy === m.key}
-            onClick={() => copy(m.key)}
+            onClick={() => load(m.key, m.label)}
             className={`rounded-sm border px-2.5 py-1 text-[0.72rem] transition-colors disabled:opacity-50 ${
-              copied === m.key
-                ? "border-value text-value bg-[rgba(37,224,138,0.07)]"
+              active?.market === m.key
+                ? "border-cyan text-cyan bg-[rgba(79,214,255,0.07)]"
                 : "border-line text-muted hover:border-[#2c3744] hover:text-fg"
             }`}
           >
-            {copied === m.key ? "copiado ✓" : `⧉ ${m.label}`}
+            {busy === m.key ? "gerando…" : `⧉ ${m.label}`}
           </button>
         ))}
       </div>
+
       {err && <div className="mt-2"><ErrorBox msg={err} /></div>}
+
+      {active && (
+        <div className="mt-3 rounded-sm border border-line bg-panel-2 px-3 py-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="overline">prompt · {active.label}</span>
+            <button
+              type="button"
+              onClick={copyAgain}
+              className={`rounded-sm border px-2.5 py-1 text-[0.72rem] transition-colors ${
+                copied
+                  ? "border-value text-value bg-[rgba(37,224,138,0.07)]"
+                  : "border-line text-muted hover:border-cyan hover:text-cyan"
+              }`}
+            >
+              {copied ? "copiado ✓" : "⧉ copiar"}
+            </button>
+          </div>
+          <textarea
+            readOnly
+            value={active.prompt}
+            onFocus={(e) => e.currentTarget.select()}
+            className="input min-h-[120px] w-full font-mono text-[0.7rem]"
+          />
+          {!copied && (
+            <p className="mt-1.5 text-[0.66rem] text-faint">
+              se o botão não copiar, clique no texto (ele seleciona tudo) e use Ctrl+C.
+            </p>
+          )}
+        </div>
+      )}
     </Panel>
   );
 }
