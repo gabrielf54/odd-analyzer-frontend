@@ -70,6 +70,36 @@ export interface AnalysisResult {
 
 export type RealResult = Record<string, { valor_real: number; bateu: boolean }>;
 
+// ───── Fluxo de coleta manual de odds (IA externa cola JSON) ─────
+// Linha de odd colada (espelha o contrato do backend src/manual/schema.ts).
+export interface ManualOddsLine {
+  market_type: string;
+  entidade: string;
+  linha?: number;
+  odd_over: number;
+  odd_under: number | null;
+  book: string;
+}
+
+// Jogador da casa que não casou na hora — o operador liga na mão (1 clique).
+export interface SemMatch {
+  nome_casa: string;
+  market_type: string;
+  candidatos: { id: string; name: string; confianca: number }[];
+}
+
+// Linha que a validação do backend recusou (não entra no money-path).
+export interface LinhaRejeitada { linha_crua: unknown; motivo: string; }
+
+export interface ManualAnalysisResult {
+  jogo: string;
+  candidatos: Candidate[];
+  reprovados: RejectedCandidate[];
+  jogadores_sem_match: SemMatch[];
+  linhas_rejeitadas: LinhaRejeitada[];
+  ia: Ai;
+}
+
 export interface Market { key: string; label: string; level: "player" | "match"; }
 
 // Espelha o registry do backend (model/markets). Usado só p/ popular o select.
