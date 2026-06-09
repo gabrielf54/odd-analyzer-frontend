@@ -5,7 +5,7 @@ import {
   getLeagues, getMatches, getOddsPrompt, postAnalyzeManual, postCrosswalk,
 } from "@/lib/api";
 import {
-  MARKETS, type League, type Match, type ManualOddsLine, type ManualAnalysisResult,
+  type League, type Match, type ManualOddsLine, type ManualAnalysisResult,
 } from "@/lib/types";
 import { localTime } from "@/lib/date";
 import { parsePastedOdds, countByMarket } from "@/lib/manualOdds";
@@ -236,6 +236,13 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   );
 }
 
+// Dois prompts, não seis: um pra todas as estatísticas de jogador, outro pra
+// todas as de partida. Mais intuitivo pro operador pesquisar na casa.
+const PROMPT_GROUPS = [
+  { key: "jogador", label: "estatísticas de jogador", hint: "chutes a gol · finalizações · desarmes" },
+  { key: "partida", label: "estatísticas dos jogos", hint: "gols · resultado (1X2) · escanteios" },
+];
+
 function PromptCopier({ eventId }: { eventId: string }) {
   const [active, setActive] = useState<{ market: string; label: string; prompt: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -268,23 +275,26 @@ function PromptCopier({ eventId }: { eventId: string }) {
   return (
     <Panel title="copiar prompt (por mercado)" badge={<Tag tone="cyan">passo 1</Tag>}>
       <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
-        copie um mercado por vez e cole na IA do navegador (ela lê o site da casa). volte aqui e
-        cole o JSON no passo 2.
+        são só dois: um pras estatísticas de jogador, outro pras do jogo. copie um, cole na IA do
+        navegador (ela lê o site da casa), e volte pra colar o JSON no passo 2.
       </p>
-      <div className="flex flex-wrap gap-1.5">
-        {MARKETS.map((m) => (
+      <div className="grid gap-2 sm:grid-cols-2">
+        {PROMPT_GROUPS.map((g) => (
           <button
-            key={m.key}
+            key={g.key}
             type="button"
-            disabled={busy === m.key}
-            onClick={() => load(m.key, m.label)}
-            className={`rounded-sm border px-2.5 py-1 text-[0.72rem] transition-colors disabled:opacity-50 ${
-              active?.market === m.key
+            disabled={busy === g.key}
+            onClick={() => load(g.key, g.label)}
+            className={`flex flex-col items-start gap-0.5 rounded-sm border px-3 py-2.5 text-left transition-colors disabled:opacity-50 ${
+              active?.market === g.key
                 ? "border-cyan text-cyan bg-[rgba(79,214,255,0.07)]"
                 : "border-line text-muted hover:border-[#2c3744] hover:text-fg"
             }`}
           >
-            {busy === m.key ? "gerando…" : `⧉ ${m.label}`}
+            <span className="display text-[0.85rem] font-bold">
+              {busy === g.key ? "gerando…" : `⧉ ${g.label}`}
+            </span>
+            <span className="text-[0.66rem] text-faint">{g.hint}</span>
           </button>
         ))}
       </div>
