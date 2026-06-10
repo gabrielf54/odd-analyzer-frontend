@@ -14,7 +14,8 @@ export function marketNoun(marketType: string): string {
   return NOUN[marketType] ?? marketType;
 }
 
-const br = (n: number) => n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+// decimal com vírgula sem depender de ICU (Node minimal quebra toLocaleString pt-BR)
+const br = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
 
 export function playerStatLines(c: Candidate): string[] {
   const s = c.stats_detalhadas;
@@ -23,7 +24,7 @@ export function playerStatLines(c: Candidate): string[] {
   const n5 = Math.min(5, c.amostra_jogos);
   const n10 = Math.min(10, c.amostra_jogos);
   const out: string[] = [];
-  if (s.media_5 != null) out.push(`Média de ${br(s.media_5)} ${noun} por jogo nos últimos ${n5} jogos.`);
+  if (s.media_5 != null && n5 > 0) out.push(`Média de ${br(s.media_5)} ${noun} por jogo nos últimos ${n5} jogos.`);
   if (s.media_10 != null && n10 > n5) out.push(`A média nos últimos ${n10} jogos é ${br(s.media_10)} por jogo.`);
   if (s.ultimos_valores.length > 0) out.push(`Jogo a jogo (do mais recente): ${s.ultimos_valores.join(", ")}.`);
   if (s.media_casa != null) out.push(`Em casa: ${br(s.media_casa)} por jogo (${s.jogos_casa} jogos).`);

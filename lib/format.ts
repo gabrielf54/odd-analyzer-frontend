@@ -60,6 +60,7 @@ export function titularidadeInfo(
 
 // Motivos de recusa do backend (src/manual/schema.ts) → frase leiga.
 // Match por prefixo/trecho estável; fallback genérico pra motivo novo.
+// Acoplado às strings literais de lá — mudou a mensagem no backend, atualize aqui (fallback cobre o resto).
 const REJECTION_RULES: Array<[RegExp, string]> = [
   [/^odd_over deve ser/, "a odd da aposta veio inválida (1,01 ou menor) — confira o que a IA copiou do site"],
   [/^odd_under deve ser/, "o outro lado da aposta (under) veio com odd inválida — confira o que a IA copiou"],
