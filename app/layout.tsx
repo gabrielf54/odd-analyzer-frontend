@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Nav } from "@/components/Nav";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -34,7 +33,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </span>
               <span className="overline ml-1 hidden sm:inline">value terminal</span>
             </div>
-            <Nav />
             <span className="ml-auto hidden items-center gap-2 md:flex">
               <span className="overline">copa 2026</span>
               <span className="text-value">●</span>
