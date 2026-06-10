@@ -57,3 +57,19 @@ export function titularidadeInfo(
   if (c.titularidade === "desconhecido") return { texto: "sem escalação — confirme antes", tone: "warn" };
   return null;
 }
+
+// Motivos de recusa do backend (src/manual/schema.ts) → frase leiga.
+// Match por prefixo/trecho estável; fallback genérico pra motivo novo.
+const REJECTION_RULES: Array<[RegExp, string]> = [
+  [/^odd_over deve ser/, "a odd da aposta veio inválida (1,01 ou menor) — confira o que a IA copiou do site"],
+  [/^odd_under deve ser/, "o outro lado da aposta (under) veio com odd inválida — confira o que a IA copiou"],
+  [/^market_type desconhecido/, "tipo de mercado que o sistema não conhece — essa linha não é analisável"],
+  [/^mercado de jogador exige/, "faltou o nome do jogador ou a quantidade (linha) nessa aposta"],
+  [/^mercado de partida/, "apostas de total do jogo precisam dos dois lados (mais de / menos de) e da linha"],
+  [/^formato inválido/, "a linha veio num formato que o sistema não entendeu"],
+];
+
+export function friendlyRejection(motivo: string): string {
+  for (const [re, frase] of REJECTION_RULES) if (re.test(motivo)) return frase;
+  return "linha recusada — confira o que a IA devolveu";
+}

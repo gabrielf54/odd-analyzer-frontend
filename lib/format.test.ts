@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { friendlyLine, evToReais, riscoLabel } from "./format";
+import { friendlyLine, evToReais, riscoLabel, friendlyRejection } from "./format";
 
 describe("friendlyLine", () => {
   it("converte over X.5 em 'N+' com o mercado por extenso", () => {
@@ -52,5 +52,17 @@ describe("posicaoLabel", () => {
     expect(posicaoLabel("F")).toBe("atacante");
     expect(posicaoLabel("?")).toBeNull();
     expect(posicaoLabel(null)).toBeNull();
+  });
+});
+
+describe("friendlyRejection", () => {
+  it("traduz os motivos do backend pra frase leiga", () => {
+    expect(friendlyRejection("odd_over deve ser > 1.01")).toMatch(/odd .*inválida/i);
+    expect(friendlyRejection("odd_under deve ser > 1.01")).toMatch(/outro lado/i);
+    expect(friendlyRejection("market_type desconhecido: xpto")).toMatch(/mercado/i);
+    expect(friendlyRejection("mercado de jogador exige entidade (nome) e linha")).toMatch(/nome|linha/i);
+    expect(friendlyRejection("mercado de partida (totais) exige os dois lados e linha")).toMatch(/dois lados/i);
+    expect(friendlyRejection("formato inválido da linha")).toMatch(/formato/i);
+    expect(friendlyRejection("qualquer coisa nova")).toMatch(/confira/i);
   });
 });
