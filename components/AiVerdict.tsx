@@ -1,11 +1,11 @@
-import type { Ai } from "@/lib/types";
+import type { Ai, ManualIa } from "@/lib/types";
 import { Tag } from "@/components/ui";
 
 const confTone = (c: string) =>
   /alta/i.test(c) ? "value" : /baixa/i.test(c) ? "bad" : "warn";
 
-export function AiVerdict({ ia }: { ia: Ai }) {
-  const best = ia?.melhor_aposta;
+export function AiVerdict({ ia }: { ia: Ai | ManualIa }) {
+  const best = "melhor_aposta" in ia ? ia.melhor_aposta : null;
   return (
     <div className="flex flex-col gap-3">
       {best ? (
@@ -30,7 +30,7 @@ export function AiVerdict({ ia }: { ia: Ai }) {
         </div>
       )}
 
-      {ia?.outras?.length > 0 && (
+      {"outras" in ia && ia.outras?.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className="overline">outras menções</span>
           {ia.outras.map((o, i) => (

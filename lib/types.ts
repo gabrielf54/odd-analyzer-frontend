@@ -50,10 +50,15 @@ export interface Candidate {
   incerteza: string;
   market_type: string;
   trace?: Trace;
+  // ───── enriquecimento da rota manual (rank + IA revisora) ─────
+  risco?: "seguro" | "moderado" | "tiro_longo";
+  recomendado?: boolean;
+  ia_revisao?: { stance: "concorda" | "ressalva" | "veta"; nota: string | null } | null;
 }
 
 export interface AiBet { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
 export interface Ai { melhor_aposta: AiBet | null; outras: AiBet[]; alertas: string[]; }
+export interface ManualIa { topo_explicacao: string | null; alertas: string[]; }
 
 // Diagnóstico: candidato que NÃO passou nos cortes + quais cortes falharam.
 // `motivos` espelha os códigos do backend (snake_case PT, como as demais chaves).
@@ -97,7 +102,7 @@ export interface ManualAnalysisResult {
   reprovados: RejectedCandidate[];
   jogadores_sem_match: SemMatch[];
   linhas_rejeitadas: LinhaRejeitada[];
-  ia: Ai;
+  ia: ManualIa;
 }
 
 export interface Market { key: string; label: string; level: "player" | "match"; }
