@@ -1,6 +1,6 @@
 // Único ponto que fala com o backend. Nenhum componente faz fetch solto.
 import type {
-  League, Match, Lineup, AnalysisResult, RealResult,
+  League, Match,
   ManualOddsLine, ManualAnalysisResult,
 } from "./types";
 
@@ -23,27 +23,6 @@ export const getLeagues = () => req<League[]>("/ligas");
 
 export const getMatches = (leagueId: string | number, status: "finished" | "notstarted") =>
   req<Match[]>(`/ligas/${leagueId}/jogos?status=${status}`);
-
-export const getLineup = (eventId: string | number) =>
-  req<Lineup>(`/jogos/${eventId}/escalacao`);
-
-export interface AnalyzeBody {
-  event_id: string;
-  market_key: string;
-  linha?: number;
-  odd_over?: number;
-  odd_under?: number;
-  usar_ia?: boolean;
-  player_ref?: string | null;
-  league_id?: string | number | null;
-  diagnostico?: boolean;
-}
-
-export const postAnalyze = (body: AnalyzeBody) =>
-  req<AnalysisResult>("/analisar", { method: "POST", body: JSON.stringify(body) });
-
-export const getResult = (eventId: string | number, market: string, line: number) =>
-  req<RealResult>(`/jogos/${eventId}/resultado?market=${market}&linha=${line}`);
 
 // ───── Fluxo de coleta manual de odds ─────
 // Texto pronto pra colar na IA externa (um por mercado/aba).
