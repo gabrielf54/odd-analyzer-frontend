@@ -26,7 +26,7 @@ export function PlayerDetailDrawer({ candidate, onClose }: { candidate: Candidat
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-line bg-panel p-5">
+      <aside role="dialog" aria-modal="true" aria-label={c.jogador} className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-line bg-panel p-5">
         <header className="flex items-start justify-between gap-2 border-b border-line-soft pb-3">
           <div>
             <h2 className="display text-xl font-extrabold text-fg">{c.jogador}</h2>

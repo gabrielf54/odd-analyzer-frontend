@@ -73,6 +73,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
           return (
             <button
               key={m}
+              aria-pressed={active}
               className={`${chipBase} ${active ? chipActive : chipInactive}`}
               onClick={() => setFilters((f) => ({ ...f, mercados: toggleIn(f.mercados, m) }))}
             >
@@ -88,6 +89,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
           return (
             <button
               key={key}
+              aria-pressed={active}
               className={`${chipBase} ${active ? chipActive : chipInactive}`}
               onClick={() => setFilters((f) => ({ ...f, riscos: toggleIn(f.riscos, key) }))}
             >

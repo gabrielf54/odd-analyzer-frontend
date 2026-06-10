@@ -38,7 +38,12 @@ describe("coletarStorage", () => {
     saveBatch("ev1", [line]);
     saveBatch("ev1", []);
     expect(loadBatch("ev1")).toEqual([]);
-    store.set("oa:coletar:resultado:ev1", "{torto");
+    store.set("oa:coletar:resultado:v1:ev1", "{torto");
+    expect(loadResult("ev1")).toBeNull();
+  });
+
+  it("shape inválido (sem candidatos array) degrada pra null", () => {
+    store.set("oa:coletar:resultado:v1:ev1", JSON.stringify({ result: { jogo: "x" }, analisado_em: "t" }));
     expect(loadResult("ev1")).toBeNull();
   });
 });

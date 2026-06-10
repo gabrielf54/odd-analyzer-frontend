@@ -3,7 +3,8 @@
 import type { ManualOddsLine, ManualAnalysisResult } from "./types";
 
 const loteKey = (eventId: string) => `oa:coletar:lote:${eventId}`;
-const resultKey = (eventId: string) => `oa:coletar:resultado:${eventId}`;
+// versionado: mudou o shape de ManualAnalysisResult, sobe a versão (resultado velho degrada pra re-análise)
+const resultKey = (eventId: string) => `oa:coletar:resultado:v1:${eventId}`;
 
 export interface StoredResult { result: ManualAnalysisResult; analisado_em: string; }
 
@@ -23,6 +24,16 @@ function remove(key: string): void {
 export const loadBatch = (eventId: string): ManualOddsLine[] => read<ManualOddsLine[]>(loteKey(eventId)) ?? [];
 export const saveBatch = (eventId: string, batch: ManualOddsLine[]): void =>
   batch.length ? write(loteKey(eventId), batch) : remove(loteKey(eventId));
-export const loadResult = (eventId: string): StoredResult | null => read<StoredResult>(resultKey(eventId));
+export function loadResult(eventId: string): StoredResult | null {
+  const parsed = read<unknown>(resultKey(eventId));
+  if (parsed === null) return null;
+  if (
+    Array.isArray((parsed as any)?.result?.candidatos) &&
+    typeof (parsed as any)?.analisado_em === "string"
+  ) {
+    return parsed as StoredResult;
+  }
+  return null;
+}
 export const saveResult = (eventId: string, r: StoredResult): void => write(resultKey(eventId), r);
 export const clearStored = (eventId: string): void => { remove(loteKey(eventId)); remove(resultKey(eventId)); };

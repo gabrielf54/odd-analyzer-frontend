@@ -180,8 +180,12 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   }
 
   async function linkPlayer(nomeCasa: string, playerId: string) {
-    await postCrosswalk(nomeCasa, playerId);
-    await analyze(); // re-roda: agora ele casa
+    try {
+      await postCrosswalk(nomeCasa, playerId);
+      await analyze(); // re-roda: agora ele casa
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "erro ao vincular jogador");
+    }
   }
 
   return (
