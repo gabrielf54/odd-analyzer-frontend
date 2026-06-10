@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   getLeagues, getMatches, getOddsPrompt, postAnalyzeManual, postCrosswalk,
 } from "@/lib/api";
 import {
-  type League, type Match, type ManualOddsLine, type ManualAnalysisResult,
+  type League, type Match, type ManualOddsLine, type ManualAnalysisResult, type Candidate,
 } from "@/lib/types";
 import { localTime } from "@/lib/date";
 import { parsePastedOdds, countByMarket } from "@/lib/manualOdds";
 import { copyText } from "@/lib/clipboard";
+import { useUrlState } from "@/lib/urlState";
+import {
+  loadBatch, saveBatch, loadResult, saveResult, clearStored, type StoredResult,
+} from "@/lib/coletarStorage";
+import { friendlyRejection } from "@/lib/format";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
 import { CandidatesByPlayer } from "@/components/CandidatesByPlayer";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { SemMatchPanel } from "@/components/SemMatchPanel";
+import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
-export default function Collect() {
+function Collect() {
+  const { leagueId, matchId, setLeague, setMatch, clearMatch } = useUrlState();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
-  const [leagueId, setLeagueId] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,28 +40,42 @@ export default function Collect() {
   }, []);
 
   useEffect(() => {
-    if (!leagueId) return;
-    setMatches([]); setSelectedMatch(null); setError(""); setLoadingMatches(true);
+    if (!leagueId) { setMatches([]); return; }
+    setError(""); setLoadingMatches(true);
     getMatches(leagueId, "notstarted")
       .then(setMatches)
       .catch((e) => setError(e instanceof Error ? e.message : "erro inesperado"))
       .finally(() => setLoadingMatches(false));
   }, [leagueId]);
 
+  const selectedMatch = useMemo(
+    () => matches.find((m) => String(m.id) === matchId) ?? null,
+    [matches, matchId],
+  );
+
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeagueId} loading={loadingLeagues} />
+        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
       </aside>
 
       <div className="min-w-0">
         {!selectedMatch ? (
-          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error} onSelect={setSelectedMatch} />
+          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error}
+            onSelect={(m) => setMatch(String(m.id))} />
         ) : (
-          <Detail match={selectedMatch} onBack={() => setSelectedMatch(null)} />
+          <Detail key={String(selectedMatch.id)} match={selectedMatch} onBack={clearMatch} />
         )}
       </div>
     </div>
+  );
+}
+
+export default function CollectPage() {
+  return (
+    <Suspense fallback={<p className="mono text-sm text-value">carregando<span className="blink">_</span></p>}>
+      <Collect />
+    </Suspense>
   );
 }
 
@@ -99,15 +118,33 @@ function Browse({
 
 function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const time = localTime(match.data);
+  const eventId = String(match.id);
 
   const [paste, setPaste] = useState("");
   const [batch, setBatch] = useState<ManualOddsLine[]>([]);
   const [pasteError, setPasteError] = useState("");
-  const [result, setResult] = useState<ManualAnalysisResult | null>(null);
+  const [stored, setStored] = useState<StoredResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [detail, setDetail] = useState<Candidate | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // F5-proof: hidrata lote + resultado do localStorage (SSR-safe: só no mount).
+  useEffect(() => {
+    setBatch(loadBatch(eventId));
+    setStored(loadResult(eventId));
+    setHydrated(true);
+  }, [eventId]);
+
+  // Persiste o lote a cada mudança (depois da hidratação, pra não sobrescrever).
+  useEffect(() => {
+    if (hydrated) saveBatch(eventId, batch);
+  }, [eventId, batch, hydrated]);
 
   const counts = useMemo(() => countByMarket(batch), [batch]);
+  const result = stored?.result ?? null;
+  const fase: "coleta" | "resultado" = result && !editing ? "resultado" : "coleta";
 
   function addBatch() {
     setPasteError("");
@@ -118,19 +155,23 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   }
 
   function clearBatch() {
-    setBatch([]); setResult(null); setError("");
+    setBatch([]); setStored(null); setError(""); setEditing(false);
+    clearStored(eventId);
   }
 
   async function analyze() {
     if (batch.length === 0) return;
-    setError(""); setResult(null); setLoading(true);
+    setError(""); setLoading(true);
     try {
       const r = await postAnalyzeManual({
-        event_id: String(match.id),
+        event_id: eventId,
         coletado_em: new Date().toISOString(),
         odds: batch,
       });
-      setResult(r);
+      const s = { result: r, analisado_em: new Date().toISOString() };
+      setStored(s);
+      saveResult(eventId, s);
+      setEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "erro inesperado");
     } finally {
@@ -156,51 +197,68 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
         {time && <span className="overline">{time}</span>}
       </div>
 
-      <PromptCopier eventId={String(match.id)} />
+      {fase === "resultado" && result ? (
+        <BatchSummaryBar
+          count={batch.length}
+          analisadoEm={stored?.analisado_em ?? null}
+          loading={loading}
+          onEdit={() => setEditing(true)}
+          onReanalyze={analyze}
+        />
+      ) : (
+        <>
+          <PromptCopier eventId={eventId} />
 
-      <Panel title="colar odds (JSON da IA)" badge={<Tag tone="cyan">passo 2</Tag>}>
-        <div className="flex flex-col gap-3">
-          <Field
-            label="cole aqui o que a IA devolveu"
-            hint="pode colar um mercado por vez — vão se somando ao lote abaixo."
-          >
-            <textarea
-              className="input min-h-[120px] font-mono text-[0.72rem]"
-              value={paste}
-              onChange={(e) => setPaste(e.target.value)}
-              placeholder='[ { "market_type": "sot", "entidade": "K. Havertz", "linha": 0.5, "odd_over": 2.1, "book": "bet365" } ]'
-            />
-          </Field>
-          {pasteError && <ErrorBox msg={pasteError} />}
-          <button
-            onClick={addBatch}
-            className="flex w-full items-center justify-center rounded-sm border border-line py-2 text-[0.78rem] text-muted transition-colors hover:border-cyan hover:text-cyan"
-          >
-            ＋ adicionar ao lote
-          </button>
+          <Panel title="colar odds (JSON da IA)" badge={<Tag tone="cyan">passo 2</Tag>}>
+            <div className="flex flex-col gap-3">
+              <Field
+                label="cole aqui o que a IA devolveu"
+                hint="pode colar um mercado por vez — vão se somando ao lote abaixo."
+              >
+                <textarea
+                  className="input min-h-[120px] font-mono text-[0.72rem]"
+                  value={paste}
+                  onChange={(e) => setPaste(e.target.value)}
+                  placeholder='[ { "market_type": "sot", "entidade": "K. Havertz", "linha": 0.5, "odd_over": 2.1, "book": "bet365" } ]'
+                />
+              </Field>
+              {pasteError && <ErrorBox msg={pasteError} />}
+              <button
+                onClick={addBatch}
+                className="flex w-full items-center justify-center rounded-sm border border-line py-2 text-[0.78rem] text-muted transition-colors hover:border-cyan hover:text-cyan"
+              >
+                ＋ adicionar ao lote
+              </button>
 
-          {batch.length > 0 && (
-            <div className="rounded-sm border border-line bg-panel-2 px-3 py-2.5">
-              <div className="flex items-center justify-between">
-                <span className="overline">lote · {batch.length} linhas</span>
-                <button onClick={clearBatch} className="text-[0.7rem] text-faint transition-colors hover:text-bad">
-                  limpar lote
+              {batch.length > 0 && (
+                <div className="rounded-sm border border-line bg-panel-2 px-3 py-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="overline">lote · {batch.length} linhas</span>
+                    <button onClick={clearBatch} className="text-[0.7rem] text-faint transition-colors hover:text-bad">
+                      limpar lote
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {Object.entries(counts).map(([m, n]) => (
+                      <Tag key={m} tone="muted">{m} · {n}</Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button onClick={analyze} disabled={loading || batch.length === 0} className="btn w-full justify-center">
+                {loading ? "analisando…" : "▸ analisar tudo"}
+              </button>
+              {result && (
+                <button onClick={() => setEditing(false)} className="text-[0.72rem] text-faint transition-colors hover:text-fg">
+                  ‹ voltar ao resultado (sem re-analisar)
                 </button>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {Object.entries(counts).map(([m, n]) => (
-                  <Tag key={m} tone="muted">{m} · {n}</Tag>
-                ))}
-              </div>
+              )}
+              {error && <ErrorBox msg={error} />}
             </div>
-          )}
-
-          <button onClick={analyze} disabled={loading || batch.length === 0} className="btn w-full justify-center">
-            {loading ? "analisando…" : "▸ analisar tudo"}
-          </button>
-          {error && <ErrorBox msg={error} />}
-        </div>
-      </Panel>
+          </Panel>
+        </>
+      )}
 
       {loading && (
         <Panel className="grid min-h-[200px] place-items-center">
@@ -208,7 +266,7 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
         </Panel>
       )}
 
-      {result && (
+      {fase === "resultado" && result && (
         <div className="flex flex-col gap-4">
           <SemMatchPanel semMatch={result.jogadores_sem_match ?? []} onLink={linkPlayer} />
 
@@ -219,8 +277,8 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
           </div>
 
           <div className="reveal" style={{ animationDelay: "60ms" }}>
-            <Panel title={`candidatos · ${result.candidatos.length}`} badge={<Tag tone="value">edge &gt; 0</Tag>}>
-              <CandidatesByPlayer candidates={result.candidatos} />
+            <Panel title={`candidatos · ${result.candidatos.length}`} badge={<Tag tone="value">vantagem a favor</Tag>}>
+              <CandidatesByPlayer candidates={result.candidatos} onDetail={setDetail} />
             </Panel>
           </div>
 
@@ -232,6 +290,35 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
           />
         </div>
       )}
+
+      <PlayerDetailDrawer candidate={detail} onClose={() => setDetail(null)} />
+    </div>
+  );
+}
+
+/* Barra compacta da fase resultado: o lote vira uma linha; o formulário não
+   ocupa mais o topo depois de analisado. */
+function BatchSummaryBar({
+  count, analisadoEm, loading, onEdit, onReanalyze,
+}: {
+  count: number; analisadoEm: string | null; loading: boolean;
+  onEdit: () => void; onReanalyze: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-line bg-panel-2 px-3 py-2.5">
+      <span className="overline">
+        lote · {count} linhas{analisadoEm ? ` · analisado ${localTime(analisadoEm) ?? ""}` : ""}
+      </span>
+      <span className="flex items-center gap-2">
+        <button onClick={onEdit}
+          className="rounded-sm border border-line px-2.5 py-1 text-[0.72rem] text-muted transition-colors hover:border-cyan hover:text-cyan">
+          editar lote
+        </button>
+        <button onClick={onReanalyze} disabled={loading}
+          className="rounded-sm border border-value/40 px-2.5 py-1 text-[0.72rem] text-value transition-colors hover:bg-[rgba(37,224,138,0.08)] disabled:opacity-50">
+          {loading ? "analisando…" : "▸ re-analisar"}
+        </button>
+      </span>
     </div>
   );
 }
@@ -337,16 +424,18 @@ function PromptCopier({ eventId }: { eventId: string }) {
 function RejectedLines({ linhas }: { linhas: { linha_crua: unknown; motivo: string }[] }) {
   if (!linhas.length) return null;
   return (
-    <Panel title={`linhas recusadas · ${linhas.length}`} badge={<Tag tone="bad">fora do money-path</Tag>}>
+    <Panel title={`linhas recusadas · ${linhas.length}`} badge={<Tag tone="bad">fora da análise</Tag>}>
       <p className="mb-2.5 text-[0.72rem] leading-relaxed text-muted">
-        o sistema recusou estas linhas (odd inválida, mercado desconhecido, ou partida sem os dois
-        lados). não entram na análise — confira o que a IA mandou torto.
+        o sistema recusou estas linhas — elas não entram na análise. confira o que a IA copiou do site.
       </p>
       <div className="flex flex-col gap-1.5">
         {linhas.map((l, i) => (
           <div key={i} className="rounded-sm border border-line bg-panel px-3 py-2 text-[0.7rem]">
-            <span className="text-bad">{l.motivo}</span>
-            <pre className="mono mt-1 overflow-x-auto text-[0.66rem] text-faint">{JSON.stringify(l.linha_crua)}</pre>
+            <span className="text-bad">{friendlyRejection(l.motivo)}</span>
+            <details className="mt-1">
+              <summary className="cursor-pointer text-[0.64rem] text-faint hover:text-muted">ver dado bruto</summary>
+              <pre className="mono mt-1 overflow-x-auto text-[0.66rem] text-faint">{JSON.stringify(l.linha_crua)}</pre>
+            </details>
           </div>
         ))}
       </div>
