@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { getLeagues, getMatches, getResult } from "@/lib/api";
 import { MARKETS, type League, type Match, type RealResult } from "@/lib/types";
+import { useUrlState } from "@/lib/urlState";
+import { useLocalStorage } from "@/lib/useLocalStorage";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
 import { MarketChips } from "@/components/MarketChips";
@@ -10,18 +12,19 @@ import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
 const PLAYER_MARKETS = MARKETS.filter((m) => m.level === "player");
 
-export default function PostGame() {
+function PostGameInner() {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
-  const [leagueId, setLeagueId] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [marketKey, setMarketKey] = useState("sot");
-  const [line, setLine] = useState("1.5");
+  const { leagueId, matchId, setLeague, setMatch, clearMatch } = useUrlState();
+  const [marketKey, setMarketKey] = useLocalStorage("oa:pos:market", "sot");
+  const [line, setLine] = useLocalStorage("oa:pos:line", "1.5");
   const [result, setResult] = useState<RealResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedMatch = matches.find((m) => String(m.id) === matchId) ?? null;
 
   useEffect(() => {
     getLeagues()
@@ -32,7 +35,7 @@ export default function PostGame() {
 
   useEffect(() => {
     if (!leagueId) return;
-    setMatches([]); setSelectedMatch(null); setResult(null); setError(""); setLoadingMatches(true);
+    setMatches([]); setResult(null); setError(""); setLoadingMatches(true);
     getMatches(leagueId, "finished")
       .then(setMatches)
       .catch((e) => setError(e instanceof Error ? e.message : "erro inesperado"))
@@ -40,7 +43,7 @@ export default function PostGame() {
   }, [leagueId]);
 
   function goBack() {
-    setSelectedMatch(null); setResult(null); setError("");
+    clearMatch(); setResult(null); setError("");
   }
 
   async function check() {
@@ -62,7 +65,7 @@ export default function PostGame() {
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeagueId} loading={loadingLeagues} />
+        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
       </aside>
 
       <div className="min-w-0">
@@ -81,7 +84,7 @@ export default function PostGame() {
             ) : loadingMatches ? (
               <p className="mono text-sm text-cyan">carregando jogos<span className="blink">_</span></p>
             ) : (
-              <MatchList matches={matches} variant="pos" onSelect={setSelectedMatch} />
+              <MatchList matches={matches} variant="pos" onSelect={(m) => setMatch(String(m.id))} />
             )}
           </div>
         ) : (
@@ -119,8 +122,14 @@ export default function PostGame() {
             )}
 
             {result && (
-              <Panel
-                title={`${market.label} · linha ${line}`}
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-end">
+                  <button onClick={() => setResult(null)} className="overline transition-colors hover:text-fg">
+                    ✕ limpar
+                  </button>
+                </div>
+                <Panel
+                  title={`${market.label} · linha ${line}`}
                 glow
                 badge={<Tag tone={hits ? "value" : "muted"}>{hits}/{rows.length} bateram</Tag>}
               >
@@ -147,12 +156,21 @@ export default function PostGame() {
                     ))}
                   </div>
                 )}
-              </Panel>
+                </Panel>
+              </div>
             )}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function PostGame() {
+  return (
+    <Suspense fallback={<p className="mono text-sm text-cyan">carregando<span className="blink">_</span></p>}>
+      <PostGameInner />
+    </Suspense>
   );
 }
 
