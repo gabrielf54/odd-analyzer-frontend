@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { getLeagues, getMatches, getLineup, postAnalyze } from "@/lib/api";
 import { MARKETS, type League, type Match, type Lineup as LineupData, type AnalysisResult, type Market } from "@/lib/types";
 import { localTime } from "@/lib/date";
+import { useUrlState } from "@/lib/urlState";
+import { useLocalStorage } from "@/lib/useLocalStorage";
+import { restorePlayer, type StoredPlayer } from "@/lib/persist";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
 import { MatchFilter } from "@/components/MatchFilter";
@@ -15,21 +18,24 @@ import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { AiVerdict } from "@/components/AiVerdict";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
-export default function PreGame() {
+function PreGameInner() {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
-  const [leagueId, setLeagueId] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [marketKey, setMarketKey] = useState("sot");
-  const [line, setLine] = useState("1.5");
-  const [oddOver, setOddOver] = useState("1.90");
-  const [oddUnder, setOddUnder] = useState("1.90");
-  const [playerRef, setPlayerRef] = useState("");
+  const { leagueId, matchId, setLeague, setMatch, clearMatch } = useUrlState();
+  const [marketKey, setMarketKey] = useLocalStorage("oa:pre:market", "sot");
+  const [line, setLine] = useLocalStorage("oa:pre:line", "1.5");
+  const [oddOver, setOddOver] = useLocalStorage("oa:pre:oddOver", "1.90");
+  const [oddUnder, setOddUnder] = useLocalStorage("oa:pre:oddUnder", "1.90");
+  const [storedPlayer, setStoredPlayer] = useLocalStorage<StoredPlayer | null>("oa:pre:player", null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedMatch = matches.find((m) => String(m.id) === matchId) ?? null;
+  const playerRef = restorePlayer(storedPlayer, matchId);
+  const setPlayerRef = (p: string) => setStoredPlayer({ matchId, player: p });
 
   useEffect(() => {
     getLeagues()
@@ -40,7 +46,7 @@ export default function PreGame() {
 
   useEffect(() => {
     if (!leagueId) return;
-    setMatches([]); setSelectedMatch(null); setResult(null); setError(""); setLoadingMatches(true);
+    setMatches([]); setResult(null); setError(""); setLoadingMatches(true);
     getMatches(leagueId, "notstarted")
       .then(setMatches)
       .catch((e) => setError(e instanceof Error ? e.message : "erro inesperado"))
@@ -50,7 +56,7 @@ export default function PreGame() {
   const market = MARKETS.find((m) => m.key === marketKey)!;
 
   function goBack() {
-    setSelectedMatch(null); setResult(null); setError("");
+    clearMatch(); setResult(null); setError("");
   }
 
   async function analyze() {
@@ -75,12 +81,12 @@ export default function PreGame() {
   return (
     <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeagueId} loading={loadingLeagues} />
+        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
       </aside>
 
       <div className="min-w-0">
         {!selectedMatch ? (
-          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error} onSelect={setSelectedMatch} />
+          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error} onSelect={(m) => setMatch(String(m.id))} />
         ) : (
           <Detail
             match={selectedMatch}
@@ -90,7 +96,7 @@ export default function PreGame() {
             oddUnder={oddUnder} setOddUnder={setOddUnder}
             playerRef={playerRef} setPlayerRef={setPlayerRef}
             result={result} loading={loading} error={error}
-            onAnalyze={analyze} onBack={goBack}
+            onAnalyze={analyze} onBack={goBack} onClear={() => setResult(null)}
           />
         )}
       </div>
@@ -166,7 +172,7 @@ function Browse({
 
 function Detail({
   match, marketKey, setMarketKey, market, line, setLine, oddOver, setOddOver,
-  oddUnder, setOddUnder, playerRef, setPlayerRef, result, loading, error, onAnalyze, onBack,
+  oddUnder, setOddUnder, playerRef, setPlayerRef, result, loading, error, onAnalyze, onBack, onClear,
 }: {
   match: Match;
   marketKey: string; setMarketKey: (k: string) => void; market: Market;
@@ -175,7 +181,7 @@ function Detail({
   oddUnder: string; setOddUnder: (v: string) => void;
   playerRef: string; setPlayerRef: (v: string) => void;
   result: AnalysisResult | null; loading: boolean; error: string;
-  onAnalyze: () => void; onBack: () => void;
+  onAnalyze: () => void; onBack: () => void; onClear: () => void;
 }) {
   const time = localTime(match.data);
 
@@ -261,6 +267,12 @@ function Detail({
 
       {result && (
         <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="overline">resultado</span>
+            <button onClick={onClear} className="overline transition-colors hover:text-fg">
+              ✕ limpar análise
+            </button>
+          </div>
           {result.em_validacao && (
             <div className="reveal flex items-start gap-2.5 rounded-sm border border-warn/45 bg-[rgba(255,177,61,0.07)] px-3.5 py-3">
               <span className="text-warn">⚠</span>
@@ -290,6 +302,14 @@ function Detail({
         </div>
       )}
     </div>
+  );
+}
+
+export default function PreGame() {
+  return (
+    <Suspense fallback={<p className="mono text-sm text-value">carregando<span className="blink">_</span></p>}>
+      <PreGameInner />
+    </Suspense>
   );
 }
 
