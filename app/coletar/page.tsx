@@ -12,9 +12,9 @@ import { parsePastedOdds, countByMarket } from "@/lib/manualOdds";
 import { copyText } from "@/lib/clipboard";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
-import { CandidatesTable } from "@/components/CandidatesTable";
+import { CandidatesByPlayer } from "@/components/CandidatesByPlayer";
+import { RecommendationCard } from "@/components/RecommendationCard";
 import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
-import { AiVerdict } from "@/components/AiVerdict";
 import { SemMatchPanel } from "@/components/SemMatchPanel";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
@@ -213,14 +213,14 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
           <SemMatchPanel semMatch={result.jogadores_sem_match ?? []} onLink={linkPlayer} />
 
           <div className="reveal">
-            <Panel title="veredito da ia" glow badge={<Tag tone="muted">explica · não inventa</Tag>}>
-              <AiVerdict ia={result.ia} />
+            <Panel title="aposta recomendada" glow badge={<Tag tone="muted">código decide · IA revisa</Tag>}>
+              <RecommendationCard candidates={result.candidatos} ia={result.ia} />
             </Panel>
           </div>
 
           <div className="reveal" style={{ animationDelay: "60ms" }}>
             <Panel title={`candidatos · ${result.candidatos.length}`} badge={<Tag tone="value">edge &gt; 0</Tag>}>
-              <CandidatesTable candidates={result.candidatos} />
+              <CandidatesByPlayer candidates={result.candidatos} />
             </Panel>
           </div>
 
