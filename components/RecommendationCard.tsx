@@ -62,7 +62,7 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
           {best.ia_revisao?.nota ? <>: <span className="text-muted">{best.ia_revisao.nota}</span></> : "."}
           {proxima && (
             <span className="mt-1 block text-faint">
-              próxima opção sem ressalva: <strong className="text-fg">{proxima.jogador}</strong>{" "}
+              próxima opção disponível: <strong className="text-fg">{proxima.jogador}</strong>{" "}
               {friendlyLine(proxima.market_type, proxima.linha)} @ {proxima.odd}
             </span>
           )}

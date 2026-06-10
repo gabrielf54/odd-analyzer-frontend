@@ -5,6 +5,7 @@ import { friendlyLine, evToReais, riscoLabel } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 const STANCE_ICON = { concorda: "✅", ressalva: "⚠️", veta: "⛔" } as const;
+const STANCE_TEXTO = { concorda: "IA concorda", ressalva: "IA com ressalva", veta: "IA não recomenda" } as const;
 
 /** Agrupa candidatos por jogador preservando a ordem global (risco→EV). Assim a
  * mesma pessoa em várias linhas vira UM bloco ("escolha uma linha"), não N apostas. */
@@ -56,7 +57,7 @@ export function CandidatesByPlayer({ candidates }: { candidates: Candidate[] }) 
                     <span className="mono text-xs text-muted">@ {c.odd}</span>
                     {risco && <Tag tone={risco.tone}>{risco.emoji} {risco.texto}</Tag>}
                     {c.ia_revisao && (
-                      <span className="text-sm" title={c.ia_revisao.nota ?? "IA concorda"}>
+                      <span className="text-sm" title={c.ia_revisao.nota ?? STANCE_TEXTO[c.ia_revisao.stance]}>
                         {STANCE_ICON[c.ia_revisao.stance]}
                       </span>
                     )}
