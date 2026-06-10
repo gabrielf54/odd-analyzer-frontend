@@ -1,7 +1,7 @@
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
 import { InvestigationTrace } from "@/components/InvestigationTrace";
-import { friendlyLine, evToReais, riscoLabel } from "@/lib/format";
+import { friendlyLine, evToReais, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 const STANCE_ICON = { concorda: "✅", ressalva: "⚠️", veta: "⛔" } as const;
@@ -39,10 +39,18 @@ export function CandidatesByPlayer({ candidates }: { candidates: Candidate[] }) 
       {grupos.map((g) => (
         <div key={g.jogador} className="rounded-sm border border-line bg-panel">
           <div className="flex items-center justify-between border-b border-line-soft px-3 py-2">
-            <span className="display text-[0.95rem] font-bold text-fg">{g.jogador}</span>
-            {g.linhas.length > 1 && (
-              <span className="text-[0.62rem] text-faint">{g.linhas.length} linhas — escolha uma</span>
-            )}
+            <span className="display text-[0.95rem] font-bold text-fg">
+              {g.jogador}
+              {posicaoLabel(g.linhas[0]?.posicao) && (
+                <span className="ml-2 text-[0.62rem] font-normal text-faint">{posicaoLabel(g.linhas[0]?.posicao)}</span>
+              )}
+            </span>
+            <span className="flex items-center gap-2">
+              {(() => { const t = titularidadeInfo(g.linhas[0]!); return t ? <Tag tone={t.tone}>{t.texto}</Tag> : null; })()}
+              {g.linhas.length > 1 && (
+                <span className="text-[0.62rem] text-faint">{g.linhas.length} linhas — escolha uma</span>
+              )}
+            </span>
           </div>
           <div className="flex flex-col divide-y divide-line-soft">
             {g.linhas.map((c, i) => {

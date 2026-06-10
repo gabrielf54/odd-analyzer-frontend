@@ -1,6 +1,7 @@
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
 import { InvestigationTrace } from "@/components/InvestigationTrace";
+import { titularidadeInfo, posicaoLabel } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const sig = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(3)}`;
@@ -90,15 +91,19 @@ export function CandidatesTable({ candidates }: { candidates: Candidate[] }) {
               </span>
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              {c.xi_confirmado
+              {c.titularidade === "confirmado"
                 ? <Tag tone="cyan">titular ✓</Tag>
-                : <Tag tone="warn">provável</Tag>}
+                : (() => { const t = titularidadeInfo(c); return t ? <Tag tone={t.tone}>{t.texto}</Tag> : (c.xi_confirmado ? <Tag tone="cyan">titular ✓</Tag> : <Tag tone="warn">provável</Tag>); })()}
+              {posicaoLabel(c.posicao) && <Tag tone="muted">{posicaoLabel(c.posicao)}</Tag>}
               <Tag tone="muted">n={c.amostra_jogos}</Tag>
               {c.incerteza && <Tag tone="muted">{c.incerteza}</Tag>}
               {c.concedido_adversario && (
                 <span className="text-[0.62rem] text-faint">
                   adv. concede {c.concedido_adversario}
                 </span>
+              )}
+              {c.concedido_posicao && (
+                <span className="text-[0.62rem] text-faint">· {c.concedido_posicao}</span>
               )}
             </div>
           </div>

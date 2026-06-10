@@ -49,6 +49,10 @@ export interface Candidate {
   concedido_adversario: string;
   incerteza: string;
   market_type: string;
+  posicao?: string | null;
+  titularidade?: "confirmado" | "provavel" | "fora_do_xi" | "desconhecido" | null;
+  alerta_minutos?: boolean;
+  concedido_posicao?: string | null;
   trace?: Trace;
   // ───── enriquecimento da rota manual (rank + IA revisora) ─────
   risco?: "seguro" | "moderado" | "tiro_longo";

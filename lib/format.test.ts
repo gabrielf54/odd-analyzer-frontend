@@ -28,3 +28,29 @@ describe("riscoLabel", () => {
     expect(riscoLabel("tiro_longo").emoji).toBe("🔴");
   });
 });
+
+import { titularidadeInfo, posicaoLabel } from "@/lib/format";
+
+describe("titularidadeInfo", () => {
+  it("provavel + alerta de minutos → aviso de banco", () => {
+    const t = titularidadeInfo({ titularidade: "provavel", alerta_minutos: true } as never);
+    expect(t?.texto).toMatch(/banco/);
+    expect(t?.tone).toBe("warn");
+  });
+  it("provavel sem alerta → escalação prevista", () => {
+    const t = titularidadeInfo({ titularidade: "provavel", alerta_minutos: false } as never);
+    expect(t?.texto).toMatch(/prevista/);
+  });
+  it("confirmado → null (o tag 'titular ✓' existente cobre)", () => {
+    expect(titularidadeInfo({ titularidade: "confirmado", alerta_minutos: false } as never)).toBeNull();
+  });
+});
+
+describe("posicaoLabel", () => {
+  it("traduz G/D/M/F e devolve null pro resto", () => {
+    expect(posicaoLabel("M")).toBe("meio-campo");
+    expect(posicaoLabel("F")).toBe("atacante");
+    expect(posicaoLabel("?")).toBeNull();
+    expect(posicaoLabel(null)).toBeNull();
+  });
+});

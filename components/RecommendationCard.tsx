@@ -1,6 +1,6 @@
 import type { Candidate, ManualIa } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { friendlyLine, evToReais, riscoLabel } from "@/lib/format";
+import { friendlyLine, evToReais, riscoLabel, titularidadeInfo } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 
@@ -41,6 +41,7 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
         <Tag tone={vetado ? "bad" : "value"}>⭐ recomendada pelo modelo</Tag>
         {risco && <Tag tone={risco.tone}>{risco.emoji} {risco.texto}</Tag>}
         {stance && <Tag tone={stance.tone}>{stance.emoji} {stance.texto}</Tag>}
+        {(() => { const t = titularidadeInfo(best); return t ? <Tag tone={t.tone}>{t.texto}</Tag> : null; })()}
       </div>
 
       <p className="display mt-3 text-xl font-extrabold leading-tight text-fg">
@@ -50,6 +51,12 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
         </span>{" "}
         <span className="mono text-base text-muted">@ {best.odd}</span>
       </p>
+
+      {best.alerta_minutos && (
+        <p className="mt-2 rounded-sm border border-line bg-[rgba(255,193,7,0.07)] px-3 py-2 text-[0.78rem] text-fg">
+          ⚠ minutos esperados: <strong>{best.minutos_esperados.toFixed(0)} min</strong> — confirme a escalação oficial antes de apostar.
+        </p>
+      )}
 
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[0.78rem] text-muted">
         <span>modelo <strong className="text-fg">{pct(best.prob_modelo)}</strong> vs casa {pct(best.prob_devig)}</span>

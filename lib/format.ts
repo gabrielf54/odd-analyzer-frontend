@@ -35,3 +35,25 @@ const RISCO_INFO: Record<Risco, { emoji: string; texto: string; tone: "value" | 
 export function riscoLabel(risco: Risco) {
   return RISCO_INFO[risco];
 }
+
+const POSICAO_PT: Record<string, string> = { G: "goleiro", D: "defensor", M: "meio-campo", F: "atacante" };
+
+export function posicaoLabel(pos: string | null | undefined): string | null {
+  if (!pos) return null;
+  return POSICAO_PT[pos] ?? null;
+}
+
+/** Selo de titularidade pro meio-termo pré-lineup: ninguém some, mas o risco de
+ * banco fica visível. Confirmado → null (o tag "titular ✓" já cobre). */
+export function titularidadeInfo(
+  c: Pick<Candidate, "titularidade" | "alerta_minutos">,
+): { texto: string; tone: "warn" | "bad" } | null {
+  if (c.titularidade === "provavel") {
+    return c.alerta_minutos
+      ? { texto: "escalação prevista — pode começar no banco", tone: "warn" }
+      : { texto: "escalação prevista", tone: "warn" };
+  }
+  if (c.titularidade === "fora_do_xi") return { texto: "fora do time confirmado", tone: "bad" };
+  if (c.titularidade === "desconhecido") return { texto: "sem escalação — confirme antes", tone: "warn" };
+  return null;
+}
