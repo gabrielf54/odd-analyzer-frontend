@@ -33,6 +33,18 @@ export interface Trace {
   veredito_leigo: string;
 }
 
+// Bloco descritivo por candidato (espelha src/model/detailedStats.ts do backend).
+export interface StatsDetalhadas {
+  media_5: number | null;
+  media_10: number | null;
+  ultimos_valores: number[];
+  minutos_medios: number | null;
+  media_casa: number | null;
+  media_fora: number | null;
+  jogos_casa: number;
+  jogos_fora: number;
+}
+
 export interface Candidate {
   jogador: string;
   player_id: string | null;
@@ -54,6 +66,7 @@ export interface Candidate {
   alerta_minutos?: boolean;
   concedido_posicao?: string | null;
   trace?: Trace;
+  stats_detalhadas?: StatsDetalhadas | null;
   // ───── enriquecimento da rota manual (rank + IA revisora) ─────
   risco?: "seguro" | "moderado" | "tiro_longo";
   recomendado?: boolean;
