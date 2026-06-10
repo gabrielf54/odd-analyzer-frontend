@@ -110,7 +110,7 @@ function Browse({
       ) : loading ? (
         <p className="mono text-sm text-value">carregando jogos<span className="blink">_</span></p>
       ) : (
-        <MatchList matches={matches} variant="pre" onSelect={onSelect} />
+        <MatchList matches={matches} onSelect={onSelect} />
       )}
     </div>
   );
