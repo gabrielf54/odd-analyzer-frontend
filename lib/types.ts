@@ -11,11 +11,6 @@ export interface Match {
   league_id: number | string;
 }
 
-export interface Player { id: string; name: string; team_id: string; posicao: string; }
-
-export interface LineupSide { team_name: string; team_id: string; jogadores: Player[]; }
-export interface Lineup { origem: string; home: LineupSide; away: LineupSide; }
-
 // Rastro investigativo (só vem sob diagnostico:true). snake_case PT espelhando o backend.
 export interface TraceStep {
   passo: string;
@@ -73,24 +68,12 @@ export interface Candidate {
   ia_revisao?: { stance: "concorda" | "ressalva" | "veta"; nota: string | null } | null;
 }
 
-export interface AiBet { jogador: string; linha: number; veredito: string; confianca: string; motivo: string; }
-export interface Ai { melhor_aposta: AiBet | null; outras: AiBet[]; alertas: string[]; }
 export interface ManualIa { topo_explicacao: string | null; alertas: string[]; }
 
 // Diagnóstico: candidato que NÃO passou nos cortes + quais cortes falharam.
 // `motivos` espelha os códigos do backend (snake_case PT, como as demais chaves).
 export type CutReason = "edge" | "ev" | "titular" | "amostra";
 export interface RejectedCandidate extends Candidate { motivos: CutReason[]; }
-
-export interface AnalysisResult {
-  jogo: string;
-  candidatos: Candidate[];
-  reprovados: RejectedCandidate[];
-  ia: Ai;
-  em_validacao: boolean;
-}
-
-export type RealResult = Record<string, { valor_real: number; bateu: boolean }>;
 
 // ───── Fluxo de coleta manual de odds (IA externa cola JSON) ─────
 // Linha de odd colada (espelha o contrato do backend src/manual/schema.ts).
@@ -122,14 +105,3 @@ export interface ManualAnalysisResult {
   ia: ManualIa;
 }
 
-export interface Market { key: string; label: string; level: "player" | "match"; }
-
-// Espelha o registry do backend (model/markets). Usado só p/ popular o select.
-export const MARKETS: Market[] = [
-  { key: "sot", label: "Chutes a Gol (SOT)", level: "player" },
-  { key: "finalizacoes", label: "Finalizações Totais", level: "player" },
-  { key: "desarmes", label: "Desarmes", level: "player" },
-  { key: "escanteios", label: "Escanteios (Total)", level: "match" },
-  { key: "gols", label: "Gols (Total)", level: "match" },
-  { key: "vitoria", label: "Resultado (1X2)", level: "match" },
-];
