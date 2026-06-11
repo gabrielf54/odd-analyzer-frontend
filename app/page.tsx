@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   getLeagues, getMatches, getOddsPrompt, postAnalyzeManual, postCrosswalk,
+  getOdds, saveOdds, deleteOdds,
 } from "@/lib/api";
+import { oddsRowsToBatch } from "@/lib/oddsRows";
 import {
   type League, type Match, type ManualOddsLine, type ManualAnalysisResult, type Candidate,
 } from "@/lib/types";
@@ -130,11 +132,19 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // F5-proof: hidrata lote + resultado do localStorage (SSR-safe: só no mount).
+  // Abrir o jogo carrega as odds do BANCO (fonte de verdade); localStorage é fallback offline.
   useEffect(() => {
-    setBatch(loadBatch(eventId));
+    let vivo = true;
     setStored(loadResult(eventId));
-    setHydrated(true);
+    getOdds(eventId)
+      .then((rows) => {
+        if (!vivo) return;
+        if (rows.length) { const b = oddsRowsToBatch(rows); setBatch(b); saveBatch(eventId, b); }
+        else setBatch(loadBatch(eventId));
+      })
+      .catch(() => { if (vivo) setBatch(loadBatch(eventId)); })
+      .finally(() => { if (vivo) setHydrated(true); });
+    return () => { vivo = false; };
   }, [eventId]);
 
   // Persiste o lote a cada mudança (depois da hidratação, pra não sobrescrever).
@@ -146,17 +156,23 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const result = stored?.result ?? null;
   const fase: "coleta" | "resultado" = result && !editing ? "resultado" : "coleta";
 
-  function addBatch() {
+  async function addBatch() {
     setPasteError("");
     const { lines, error: err } = parsePastedOdds(paste);
     if (err) { setPasteError(err); return; }
-    setBatch((b) => [...b, ...lines]);
-    setPaste("");
+    try {
+      await saveOdds({ event_id: eventId, coletado_em: new Date().toISOString(), odds: lines });
+      setBatch((b) => [...b, ...lines]);
+      setPaste("");
+    } catch (e) {
+      setPasteError(e instanceof Error ? e.message : "erro ao salvar odds");
+    }
   }
 
   function clearBatch() {
     setBatch([]); setStored(null); setError(""); setEditing(false);
     clearStored(eventId);
+    deleteOdds(eventId).catch(() => { /* limpeza local já feita; ignora falha de rede */ });
   }
 
   async function analyze() {

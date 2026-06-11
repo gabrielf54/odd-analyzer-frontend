@@ -2,6 +2,7 @@
 import type {
   League, Match,
   ManualOddsLine, ManualAnalysisResult,
+  OddsRow, LinhaRejeitada,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -38,6 +39,16 @@ export interface ManualAnalyzeBody {
 // Cola o JSON de odds → análise geral de todos os mercados.
 export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
   req<ManualAnalysisResult>("/analise/manual", { method: "POST", body: JSON.stringify(body) });
+
+// ───── Odds persistidas (tabela = fonte de verdade) ─────
+export const getOdds = (eventId: string | number) =>
+  req<OddsRow[]>(`/jogos/${eventId}/odds`);
+
+export const saveOdds = (body: ManualAnalyzeBody) =>
+  req<{ salvas: number; linhas_rejeitadas: LinhaRejeitada[] }>("/odds", { method: "POST", body: JSON.stringify(body) });
+
+export const deleteOdds = (eventId: string | number) =>
+  req<{ ok: true }>(`/jogos/${eventId}/odds`, { method: "DELETE" });
 
 // Liga um nome da casa a um jogador (stats-id) e persiste no crosswalk.
 export const postCrosswalk = (nome_casa: string, player_id: string) =>

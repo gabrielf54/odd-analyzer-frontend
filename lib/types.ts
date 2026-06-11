@@ -105,3 +105,15 @@ export interface ManualAnalysisResult {
   ia: ManualIa;
 }
 
+// Linha de odd persistida (espelha a tabela `odds` do backend; retorno do GET).
+export interface OddsRow {
+  event_id: string;
+  entidade: string;
+  market_type: string;
+  linha: number;
+  odd_over: number;
+  odd_under: number | null;
+  book: string;
+  coletado_em?: string;
+}
+
