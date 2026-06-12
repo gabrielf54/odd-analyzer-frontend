@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { withLeague, withMatch, withoutMatch } from "@/lib/urlState";
+import { withLeague, withMatch, withoutMatch, withLeagueMatch } from "@/lib/urlState";
 
 describe("urlState helpers", () => {
   it("withLeague seta league e limpa match", () => {
@@ -25,5 +25,10 @@ describe("urlState helpers", () => {
   it("withoutMatch remove match mantendo league", () => {
     const p = new URLSearchParams("league=1&match=42");
     expect(withoutMatch(p)).toBe("league=1");
+  });
+
+  it("withLeagueMatch troca liga E jogo de uma vez (não limpa o match)", () => {
+    const p = new URLSearchParams("league=1&match=42");
+    expect(withLeagueMatch(p, "9", "777")).toBe("league=9&match=777");
   });
 });

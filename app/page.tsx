@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   getLeagues, getMatches, getOddsPrompt, postAnalyzeManual, postCrosswalk,
-  getOdds, saveOdds, deleteOdds,
+  getOdds, getAnalysis, saveOdds, deleteOdds,
 } from "@/lib/api";
 import { oddsRowsToBatch } from "@/lib/oddsRows";
 import {
@@ -16,7 +16,10 @@ import { useUrlState } from "@/lib/urlState";
 import {
   loadBatch, saveBatch, loadResult, saveResult, clearStored, type StoredResult,
 } from "@/lib/coletarStorage";
+import { addTab, removeTab, nextActiveId } from "@/lib/tabs";
+import { loadTabs, saveTabs } from "@/lib/tabsStorage";
 import { friendlyRejection } from "@/lib/format";
+import { GameTabs } from "@/components/GameTabs";
 import { LeagueRail } from "@/components/LeagueRail";
 import { MatchList } from "@/components/MatchList";
 import { CandidatesByPlayer } from "@/components/CandidatesByPlayer";
@@ -27,12 +30,24 @@ import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
 function Collect() {
-  const { leagueId, matchId, setLeague, setMatch, clearMatch } = useUrlState();
+  const { leagueId, matchId, setLeague, setLeagueMatch, clearMatch } = useUrlState();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState("");
+
+  // Abas abertas (estilo VSCode): lista de jogos persistida; a aba ativa é a URL.
+  const [tabs, setTabs] = useState<Match[]>([]);
+  const [tabsHydrated, setTabsHydrated] = useState(false);
+  useEffect(() => { setTabs(loadTabs()); setTabsHydrated(true); }, []);
+  useEffect(() => { if (tabsHydrated) saveTabs(tabs); }, [tabs, tabsHydrated]);
+
+  // Abas fechadas há pouco: trava o auto-add de ressuscitar a aba ativa fechada
+  // durante o render onde a URL ainda aponta pro jogo fechado (o router só atualiza
+  // a URL no tick seguinte). Limpa quando a aba ativa de fato muda.
+  const closedRef = useRef<Set<string>>(new Set());
+  useEffect(() => { closedRef.current.clear(); }, [matchId]);
 
   useEffect(() => {
     getLeagues()
@@ -50,24 +65,61 @@ function Collect() {
       .finally(() => setLoadingMatches(false));
   }, [leagueId]);
 
-  const selectedMatch = useMemo(
-    () => matches.find((m) => String(m.id) === matchId) ?? null,
-    [matches, matchId],
+  // Jogo ativo: procura primeiro nas abas (cross-liga, sobrevive à troca de liga),
+  // depois cai pro jogo da liga atual (deep-link antes das abas hidratarem).
+  const activeMatch = useMemo(
+    () => tabs.find((t) => String(t.id) === matchId)
+       ?? matches.find((m) => String(m.id) === matchId)
+       ?? null,
+    [tabs, matches, matchId],
   );
 
-  return (
-    <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
-      </aside>
+  // Deep-link/clique: garante que o jogo ativo vire uma aba. O guard de closedRef
+  // evita re-adicionar a aba que o usuário acabou de fechar (lag da URL).
+  useEffect(() => {
+    if (!tabsHydrated || !activeMatch) return;
+    if (closedRef.current.has(String(activeMatch.id))) return;
+    setTabs((cur) => addTab(cur, activeMatch));
+  }, [tabsHydrated, activeMatch]);
 
-      <div className="min-w-0">
-        {!selectedMatch ? (
-          <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error}
-            onSelect={(m) => setMatch(String(m.id))} />
-        ) : (
-          <Detail key={String(selectedMatch.id)} match={selectedMatch} onBack={clearMatch} />
-        )}
+  function openMatch(m: Match) {
+    setTabs((cur) => addTab(cur, m));
+    setLeagueMatch(String(m.league_id), String(m.id));
+  }
+
+  function closeTab(id: string) {
+    const wasActive = String(id) === matchId;
+    const nextId = nextActiveId(tabs, id, matchId);
+    closedRef.current.add(String(id));
+    setTabs((cur) => removeTab(cur, id));
+    if (!wasActive) return;
+    const nx = tabs.find((t) => String(t.id) === nextId);
+    if (nx) setLeagueMatch(String(nx.league_id), String(nx.id));
+    else clearMatch();
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <GameTabs
+        tabs={tabs}
+        activeId={matchId}
+        onSelect={(m) => setLeagueMatch(String(m.league_id), String(m.id))}
+        onClose={closeTab}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[170px_1fr]">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
+        </aside>
+
+        <div className="min-w-0">
+          {!activeMatch ? (
+            <Browse leagueId={leagueId} matches={matches} loading={loadingMatches} error={error}
+              onSelect={openMatch} />
+          ) : (
+            <Detail key={String(activeMatch.id)} match={activeMatch} onBack={clearMatch} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -132,10 +184,25 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Abrir o jogo carrega as odds do BANCO (fonte de verdade); localStorage é fallback offline.
+  // Guarda contra setState depois de desmontar: ao trocar de aba no meio de um
+  // request assíncrono (analyze/addBatch/linkPlayer), os handlers não tocam mais
+  // o estado da instância morta. A persistência (saveResult/saveOdds) roda antes
+  // do guard, então o dado nunca se perde — só o setState órfão é evitado.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // Abrir o jogo carrega odds E resultado do BANCO (fonte de verdade); localStorage
+  // é só cache/fallback offline. O resultado vindo do banco sobrevive a localStorage
+  // falho, cache limpo e troca de dispositivo.
   useEffect(() => {
     let vivo = true;
-    setStored(loadResult(eventId));
+    setStored(loadResult(eventId)); // otimista do cache enquanto o banco responde
+    getAnalysis(eventId)
+      .then((a) => { if (vivo && a) { setStored(a); saveResult(eventId, a); } })
+      .catch(() => { /* sem banco: mantém o cache local já setado */ });
     getOdds(eventId)
       .then((rows) => {
         if (!vivo) return;
@@ -162,10 +229,11 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
     if (err) { setPasteError(err); return; }
     try {
       await saveOdds({ event_id: eventId, coletado_em: new Date().toISOString(), odds: lines });
+      if (!mountedRef.current) return;
       setBatch((b) => [...b, ...lines]);
       setPaste("");
     } catch (e) {
-      setPasteError(e instanceof Error ? e.message : "erro ao salvar odds");
+      if (mountedRef.current) setPasteError(e instanceof Error ? e.message : "erro ao salvar odds");
     }
   }
 
@@ -185,22 +253,24 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
         odds: batch,
       });
       const s = { result: r, analisado_em: new Date().toISOString() };
+      saveResult(eventId, s); // persiste ANTES do guard → sobrevive à troca de aba
+      if (!mountedRef.current) return;
       setStored(s);
-      saveResult(eventId, s);
       setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "erro inesperado");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "erro inesperado");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }
 
   async function linkPlayer(nomeCasa: string, playerId: string) {
     try {
       await postCrosswalk(nomeCasa, playerId);
+      if (!mountedRef.current) return;
       await analyze(); // re-roda: agora ele casa
     } catch (e) {
-      setError(e instanceof Error ? e.message : "erro ao vincular jogador");
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "erro ao vincular jogador");
     }
   }
 
@@ -217,6 +287,10 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
         {time && <span className="overline">{time}</span>}
       </div>
 
+      {/* Copiar prompt fica SEMPRE visível — mesmo na fase resultado o operador
+          pode querer pegar o prompt de outro mercado sem reabrir o lote. */}
+      <PromptCopier eventId={eventId} />
+
       {fase === "resultado" && result ? (
         <BatchSummaryBar
           count={batch.length}
@@ -226,10 +300,7 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
           onReanalyze={analyze}
         />
       ) : (
-        <>
-          <PromptCopier eventId={eventId} />
-
-          <Panel title="colar odds (JSON da IA)" badge={<Tag tone="cyan">passo 2</Tag>}>
+        <Panel title="colar odds (JSON da IA)" badge={<Tag tone="cyan">passo 2</Tag>}>
             <div className="flex flex-col gap-3">
               <Field
                 label="cole aqui o que a IA devolveu"
@@ -276,8 +347,7 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
               )}
               {error && <ErrorBox msg={error} />}
             </div>
-          </Panel>
-        </>
+        </Panel>
       )}
 
       {loading && (
@@ -346,7 +416,7 @@ function BatchSummaryBar({
 // Dois prompts, não seis: um pra todas as estatísticas de jogador, outro pra
 // todas as de partida. Mais intuitivo pro operador pesquisar na casa.
 const PROMPT_GROUPS = [
-  { key: "jogador", label: "estatísticas de jogador", hint: "chutes a gol · finalizações · desarmes" },
+  { key: "jogador", label: "estatísticas de jogador", hint: "chutes a gol · finalizações · desarmes · faltas · passes" },
   { key: "partida", label: "estatísticas dos jogos", hint: "gols · resultado (1X2) · escanteios" },
 ];
 

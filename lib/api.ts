@@ -44,6 +44,10 @@ export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
 export const getOdds = (eventId: string | number) =>
   req<OddsRow[]>(`/jogos/${eventId}/odds`);
 
+// Resultado completo da última análise manual (banco = fonte de verdade), ou null.
+export const getAnalysis = (eventId: string | number) =>
+  req<{ result: ManualAnalysisResult; analisado_em: string } | null>(`/jogos/${eventId}/analise`);
+
 export const saveOdds = (body: ManualAnalyzeBody) =>
   req<{ salvas: number; linhas_rejeitadas: LinhaRejeitada[] }>("/odds", { method: "POST", body: JSON.stringify(body) });
 

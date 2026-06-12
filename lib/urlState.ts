@@ -22,12 +22,29 @@ export function withoutMatch(params: URLSearchParams): string {
   return withMatch(params, "");
 }
 
+// Ativa um jogo já setando a liga dele na MESMA atualização de URL — necessário
+// pras abas cross-liga: clicar numa aba de outra liga acerta o destaque do rail
+// sem disparar o clear-match do withLeague.
+export function withLeagueMatch(
+  params: URLSearchParams,
+  leagueId: string,
+  matchId: string,
+): string {
+  const next = new URLSearchParams(params);
+  if (leagueId) next.set("league", leagueId);
+  else next.delete("league");
+  if (matchId) next.set("match", matchId);
+  else next.delete("match");
+  return next.toString();
+}
+
 // ───── hook (wrapper fino sobre os helpers + Next router) ─────
 export interface UrlState {
   leagueId: string;
   matchId: string;
   setLeague: (id: string) => void;
   setMatch: (id: string) => void;
+  setLeagueMatch: (leagueId: string, matchId: string) => void;
   clearMatch: () => void;
 }
 
@@ -45,6 +62,7 @@ export function useUrlState(): UrlState {
     matchId: search.get("match") ?? "",
     setLeague: (id) => go(withLeague(current, id)),
     setMatch: (id) => go(withMatch(current, id)),
+    setLeagueMatch: (leagueId, matchId) => go(withLeagueMatch(current, leagueId, matchId)),
     clearMatch: () => go(withoutMatch(current)),
   };
 }
