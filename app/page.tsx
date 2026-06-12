@@ -144,7 +144,7 @@ function Browse({
         <h1 className="display text-2xl font-extrabold leading-none text-fg">coletar odds</h1>
         <p className="mt-2 max-w-xl text-[0.74rem] leading-relaxed text-muted">
           sem API de odds barata: você copia o <span className="text-value">prompt</span>, a IA do
-          navegador lê o site da casa e devolve um JSON, você cola aqui e o sistema analisa{" "}
+          navegador lê o site da casa e devolve as odds, você cola aqui e o sistema analisa{" "}
           <span className="text-value">todos os mercados</span> de uma vez. escolha a liga e o jogo.
         </p>
       </div>
@@ -429,11 +429,14 @@ function BatchSummaryBar({
   );
 }
 
-// Dois prompts, não seis: um pra todas as estatísticas de jogador, outro pra
-// todas as de partida. Mais intuitivo pro operador pesquisar na casa.
+// Um prompt só: coleta o JOGO INTEIRO (partida + jogador) numa passada. O backend
+// (chave "tudo") monta os dois blocos com um header book= único e saída compacta.
 const PROMPT_GROUPS = [
-  { key: "jogador", label: "estatísticas de jogador", hint: "chutes a gol · finalizações · desarmes · faltas · passes" },
-  { key: "partida", label: "estatísticas dos jogos", hint: "gols · resultado (1X2) · escanteios" },
+  {
+    key: "tudo",
+    label: "jogo inteiro",
+    hint: "partida (gols · 1X2 · escanteios) + jogador (chutes · finalizações · desarmes · faltas · passes)",
+  },
 ];
 
 function PromptCopier({ eventId }: { eventId: string }) {
@@ -466,12 +469,12 @@ function PromptCopier({ eventId }: { eventId: string }) {
   }
 
   return (
-    <Panel title="copiar prompt (por mercado)" badge={<Tag tone="cyan">passo 1</Tag>}>
+    <Panel title="copiar prompt (jogo inteiro)" badge={<Tag tone="cyan">passo 1</Tag>}>
       <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
-        são só dois: um pras estatísticas de jogador, outro pras do jogo. copie um, cole na IA do
-        navegador (ela lê o site da casa), e volte pra colar o JSON no passo 2.
+        é um só: cobre o jogo inteiro (partida + jogador) numa coleta. copie, cole na IA do
+        navegador (ela lê o site da casa), e volte pra colar o resultado no passo 2.
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2">
         {PROMPT_GROUPS.map((g) => (
           <button
             key={g.key}
