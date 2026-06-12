@@ -18,6 +18,8 @@ describe("detailText", () => {
     expect(marketNoun("desarmes")).toBe("desarmes");
     expect(marketNoun("sot")).toBe("chutes a gol");
     expect(marketNoun("finalizacoes")).toBe("finalizações");
+    expect(marketNoun("faltas")).toBe("faltas cometidas");
+    expect(marketNoun("vitoria")).toBe("resultado");
   });
 
   it("frases com média, jogo a jogo, casa/fora e minutos — sem jargão", () => {

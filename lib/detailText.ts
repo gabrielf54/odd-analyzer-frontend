@@ -6,8 +6,10 @@ const NOUN: Record<string, string> = {
   desarmes: "desarmes",
   sot: "chutes a gol",
   finalizacoes: "finalizações",
+  faltas: "faltas cometidas",
   escanteios: "escanteios",
   gols: "gols",
+  vitoria: "resultado",
 };
 
 export function marketNoun(marketType: string): string {

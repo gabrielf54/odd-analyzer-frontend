@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { friendlyLine, evToReais, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
+import { lineLabel, displayName, evToReais, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
 import { marketNoun } from "@/lib/detailText";
 import { applyFilters, toggleIn } from "@/lib/candidateFilters";
 import type { CandidateFilters } from "@/lib/candidateFilters";
@@ -122,7 +122,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
               <span className="flex items-center gap-2">
                 <span className="text-[0.7rem] text-faint transition-transform group-open:rotate-90">▸</span>
                 <span className="display text-[0.95rem] font-bold text-fg">
-                  {g.jogador}
+                  {displayName(firstLine)}
                   {posLabel && (
                     <span className="ml-2 text-[0.62rem] font-normal text-faint">{posLabel}</span>
                   )}
@@ -131,7 +131,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
               </span>
               <span className="flex items-center gap-2">
                 <span className="text-[0.72rem] text-muted">
-                  {friendlyLine(firstLine.market_type, firstLine.linha)}
+                  {lineLabel(firstLine)}
                   <span className="mono ml-1 text-xs">@ {firstLine.odd}</span>
                   {firstRisco && <span className="ml-1.5"><Tag tone={firstRisco.tone}>{firstRisco.emoji} {firstRisco.texto}</Tag></span>}
                 </span>
@@ -150,7 +150,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       {c.recomendado && <span title="recomendada">⭐</span>}
                       <span className="display text-[0.85rem] font-semibold text-fg">
-                        {friendlyLine(c.market_type, c.linha)}
+                        {lineLabel(c)}
                       </span>
                       <span className="mono text-xs text-muted">@ {c.odd}</span>
                       {risco && <Tag tone={risco.tone}>{risco.emoji} {risco.texto}</Tag>}

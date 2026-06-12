@@ -4,6 +4,9 @@ const MERCADO_PT: Record<string, string> = {
   sot: "chutes a gol",
   finalizacoes: "finalizações",
   desarmes: "desarmes",
+  // a casa liquida `fouls` (faltas COMETIDAS pelo jogador), não as sofridas — o
+  // rótulo precisa dizer qual, senão o operador não sabe o que está apostando.
+  faltas: "faltas cometidas",
   escanteios: "escanteios",
   gols: "gols",
   vitoria: "resultado",
@@ -14,6 +17,37 @@ export function friendlyLine(marketType: string, linha: number): string {
   const limiar = Math.ceil(linha); // 2.5 → 3, 0.5 → 1
   const nome = MERCADO_PT[marketType] ?? marketType;
   return `${limiar}+ ${nome}`;
+}
+
+/** 1X2: o candidato de vitória chega como "Time A x Time B (1|X|2)" — o sufixo é o
+ * código de lado que o backend cola (1=mandante, X=empate, 2=visitante; ver
+ * pipeline.ts SUFIXO). Traduz pro desfecho legível ("Time B vence" / "empate").
+ * Retorna null se não for 1X2 ou não der pra parsear (fail-safe pro chamador). */
+export function vitoriaOutcome(jogador: string): string | null {
+  const m = jogador.match(/^(.*) \(([1X2])\)\s*$/);
+  if (!m) return null;
+  const [, partida, lado] = m;
+  if (lado === "X") return "empate";
+  const times = partida.split(" x ");
+  if (times.length !== 2) return null;
+  const [home, away] = times.map((t) => t.trim());
+  return lado === "1" ? `${home} vence` : `${away} vence`;
+}
+
+type LineFields = { market_type: string; linha: number; jogador: string };
+
+/** Rótulo da LINHA no card. Contagem → "2+ desarmes" / "2+ faltas cometidas".
+ * 1X2 → o desfecho ("Bósnia vence"), nunca "0+ resultado" (linha 0 é falsa em 1X2). */
+export function lineLabel(c: LineFields): string {
+  if (c.market_type === "vitoria") return vitoriaOutcome(c.jogador) ?? "resultado";
+  return friendlyLine(c.market_type, c.linha);
+}
+
+/** Nome do GRUPO/título. Pra 1X2, tira o código cru "(1|X|2)" do fim, deixando só o
+ * nome do jogo no cabeçalho (o desfecho vai na linha). Pro resto, o próprio nome. */
+export function displayName(c: Pick<LineFields, "market_type" | "jogador">): string {
+  if (c.market_type === "vitoria") return c.jogador.replace(/\s*\([1X2]\)\s*$/, "");
+  return c.jogador;
 }
 
 /** EV (lucro por R$1 no longo prazo) → "+R$2,75 / R$10". */

@@ -1,6 +1,6 @@
 import type { Candidate, ManualIa } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { friendlyLine, evToReais, riscoLabel, titularidadeInfo } from "@/lib/format";
+import { lineLabel, displayName, evToReais, riscoLabel, titularidadeInfo } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 
@@ -45,9 +45,9 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
       </div>
 
       <p className="display mt-3 text-xl font-extrabold leading-tight text-fg">
-        {best.jogador}{" "}
+        {displayName(best)}{" "}
         <span className={vetado ? "text-bad" : "text-value"}>
-          {friendlyLine(best.market_type, best.linha)}
+          {lineLabel(best)}
         </span>{" "}
         <span className="mono text-base text-muted">@ {best.odd}</span>
       </p>
@@ -69,8 +69,8 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
           {best.ia_revisao?.nota ? <>: <span className="text-muted">{best.ia_revisao.nota}</span></> : "."}
           {proxima && (
             <span className="mt-1 block text-faint">
-              próxima opção disponível: <strong className="text-fg">{proxima.jogador}</strong>{" "}
-              {friendlyLine(proxima.market_type, proxima.linha)} @ {proxima.odd}
+              próxima opção disponível: <strong className="text-fg">{displayName(proxima)}</strong>{" "}
+              {lineLabel(proxima)} @ {proxima.odd}
             </span>
           )}
         </p>

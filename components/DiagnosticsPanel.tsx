@@ -1,6 +1,7 @@
 import type { RejectedCandidate, CutReason } from "@/lib/types";
 import { Tag } from "@/components/ui";
 import { InvestigationTrace } from "@/components/InvestigationTrace";
+import { displayName } from "@/lib/format";
 
 /* Diagnóstico: por que cada candidato NÃO passou nos cortes. Tira o sistema da
    caixa-preta — em vez de "lista vazia", mostra qual porta fechou pra cada um. */
@@ -58,7 +59,7 @@ export function DiagnosticsPanel({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="display truncate text-[0.86rem] font-semibold text-fg">
-                  {c.jogador}
+                  {displayName(c)}
                 </span>
                 <span className="mono shrink-0 text-[0.7rem] text-muted">
                   {c.market_type} {c.linha}

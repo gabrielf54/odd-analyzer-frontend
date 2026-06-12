@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { friendlyLine, posicaoLabel, titularidadeInfo } from "@/lib/format";
+import { lineLabel, displayName, posicaoLabel, titularidadeInfo } from "@/lib/format";
 import { playerStatLines, confrontoLines } from "@/lib/detailText";
 
 /* Painel deslizante à direita com o "porquê" do número, em linguagem leiga.
@@ -26,13 +26,13 @@ export function PlayerDetailDrawer({ candidate, onClose }: { candidate: Candidat
   return (
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden />
-      <aside role="dialog" aria-modal="true" aria-label={c.jogador} className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-line bg-panel p-5">
+      <aside role="dialog" aria-modal="true" aria-label={displayName(c)} className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-line bg-panel p-5">
         <header className="flex items-start justify-between gap-2 border-b border-line-soft pb-3">
           <div>
-            <h2 className="display text-xl font-extrabold text-fg">{c.jogador}</h2>
+            <h2 className="display text-xl font-extrabold text-fg">{displayName(c)}</h2>
             <p className="mt-0.5 text-[0.72rem] text-muted">
               {posLabel && <>{posLabel} · </>}
-              {friendlyLine(c.market_type, c.linha)} <span className="mono">@ {c.odd}</span>
+              {lineLabel(c)} <span className="mono">@ {c.odd}</span>
             </p>
             {tit && <div className="mt-1.5"><Tag tone={tit.tone}>{tit.texto}</Tag></div>}
           </div>

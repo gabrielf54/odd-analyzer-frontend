@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { friendlyLine, evToReais, riscoLabel, friendlyRejection } from "./format";
+import { friendlyLine, lineLabel, displayName, vitoriaOutcome, evToReais, riscoLabel, friendlyRejection } from "./format";
 
 describe("friendlyLine", () => {
   it("converte over X.5 em 'N+' com o mercado por extenso", () => {
@@ -8,8 +8,45 @@ describe("friendlyLine", () => {
     expect(friendlyLine("finalizacoes", 1.5)).toBe("2+ finalizações");
     expect(friendlyLine("sot", 0.5)).toBe("1+ chutes a gol");
   });
+  it("faltas diz 'cometidas' (a casa liquida fouls, não as sofridas)", () => {
+    expect(friendlyLine("faltas", 0.5)).toBe("1+ faltas cometidas");
+    expect(friendlyLine("faltas", 1.5)).toBe("2+ faltas cometidas");
+  });
   it("mercado desconhecido cai no próprio key", () => {
     expect(friendlyLine("xpto", 1.5)).toBe("2+ xpto");
+  });
+});
+
+describe("vitoriaOutcome", () => {
+  it("traduz o código de lado pro desfecho legível", () => {
+    expect(vitoriaOutcome("Canada x Bosnia & Herzegovina (1)")).toBe("Canada vence");
+    expect(vitoriaOutcome("Canada x Bosnia & Herzegovina (X)")).toBe("empate");
+    expect(vitoriaOutcome("Canada x Bosnia & Herzegovina (2)")).toBe("Bosnia & Herzegovina vence");
+  });
+  it("retorna null quando não é 1X2 com sufixo de lado", () => {
+    expect(vitoriaOutcome("Luc De Fougerolles")).toBeNull();
+    expect(vitoriaOutcome("Time sem separador (2)")).toBeNull();
+  });
+});
+
+describe("lineLabel", () => {
+  it("contagem → 'N+ mercado'", () => {
+    expect(lineLabel({ market_type: "faltas", linha: 1.5, jogador: "Luc De Fougerolles" })).toBe("2+ faltas cometidas");
+  });
+  it("1X2 → desfecho, nunca '0+ resultado'", () => {
+    expect(lineLabel({ market_type: "vitoria", linha: 0, jogador: "Canada x Bosnia & Herzegovina (2)" })).toBe("Bosnia & Herzegovina vence");
+  });
+  it("1X2 não-parseável cai em 'resultado' (fail-safe)", () => {
+    expect(lineLabel({ market_type: "vitoria", linha: 0, jogador: "partida" })).toBe("resultado");
+  });
+});
+
+describe("displayName", () => {
+  it("1X2 → tira o código de lado do título", () => {
+    expect(displayName({ market_type: "vitoria", jogador: "Canada x Bosnia & Herzegovina (2)" })).toBe("Canada x Bosnia & Herzegovina");
+  });
+  it("jogador → nome intacto", () => {
+    expect(displayName({ market_type: "faltas", jogador: "Luc De Fougerolles" })).toBe("Luc De Fougerolles");
   });
 });
 
