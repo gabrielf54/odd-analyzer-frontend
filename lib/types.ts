@@ -84,6 +84,9 @@ export interface ManualOddsLine {
   odd_over: number;
   odd_under: number | null;
   book: string;
+  // Nome como a casa exibe, só quando difere de `entidade` (auditoria de match
+  // em tempo de coleta — não vai pro backend). Vem do formato compacto `ent^casa`.
+  entidade_casa?: string;
 }
 
 // Jogador da casa que não casou na hora — o operador liga na mão (1 clique).

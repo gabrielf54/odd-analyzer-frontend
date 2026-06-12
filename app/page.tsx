@@ -10,7 +10,7 @@ import {
   type League, type Match, type ManualOddsLine, type ManualAnalysisResult, type Candidate,
 } from "@/lib/types";
 import { localTime } from "@/lib/date";
-import { parsePastedOdds, countByMarket } from "@/lib/manualOdds";
+import { parsePastedOdds, countByMarket, aliasDiffs } from "@/lib/manualOdds";
 import { copyText } from "@/lib/clipboard";
 import { useUrlState } from "@/lib/urlState";
 import {
@@ -177,6 +177,7 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const [paste, setPaste] = useState("");
   const [batch, setBatch] = useState<ManualOddsLine[]>([]);
   const [pasteError, setPasteError] = useState("");
+  const [aliasNote, setAliasNote] = useState<{ entidade: string; casa: string }[]>([]);
   const [stored, setStored] = useState<StoredResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -229,8 +230,13 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
     if (err) { setPasteError(err); return; }
     try {
       await saveOdds({ event_id: eventId, coletado_em: new Date().toISOString(), odds: lines });
+      // O banco faz upsert pela chave (event_id+entidade+market_type+linha+book):
+      // lote duplicado ATUALIZA a odd, não duplica. Recarrego do banco pra a tela
+      // espelhar essa verdade já deduplicada, em vez de concatenar cego.
+      const rows = await getOdds(eventId);
       if (!mountedRef.current) return;
-      setBatch((b) => [...b, ...lines]);
+      setBatch(oddsRowsToBatch(rows));
+      setAliasNote(aliasDiffs(lines)); // nomes que a casa exibe diferente → conferir
       setPaste("");
     } catch (e) {
       if (mountedRef.current) setPasteError(e instanceof Error ? e.message : "erro ao salvar odds");
@@ -238,7 +244,7 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   }
 
   function clearBatch() {
-    setBatch([]); setStored(null); setError(""); setEditing(false);
+    setBatch([]); setStored(null); setError(""); setEditing(false); setAliasNote([]);
     clearStored(eventId);
     deleteOdds(eventId).catch(() => { /* limpeza local já feita; ignora falha de rede */ });
   }
@@ -300,20 +306,30 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
           onReanalyze={analyze}
         />
       ) : (
-        <Panel title="colar odds (JSON da IA)" badge={<Tag tone="cyan">passo 2</Tag>}>
+        <Panel title="colar odds da IA" badge={<Tag tone="cyan">passo 2</Tag>}>
             <div className="flex flex-col gap-3">
               <Field
                 label="cole aqui o que a IA devolveu"
-                hint="pode colar um mercado por vez — vão se somando ao lote abaixo."
+                hint="formato compacto (book no topo, campos por |) ou JSON — pode colar um mercado por vez, vão se somando ao lote."
               >
                 <textarea
                   className="input min-h-[120px] font-mono text-[0.72rem]"
                   value={paste}
                   onChange={(e) => setPaste(e.target.value)}
-                  placeholder='[ { "market_type": "sot", "entidade": "K. Havertz", "linha": 0.5, "odd_over": 2.1, "book": "bet365" } ]'
+                  placeholder={"book=bet365\nsot|K. Havertz|0.5|2.1\ndesarmes|J. Kimmich|1.5|1.9"}
                 />
               </Field>
               {pasteError && <ErrorBox msg={pasteError} />}
+              {aliasNote.length > 0 && (
+                <div className="rounded-sm border border-warn/40 bg-[rgba(255,177,61,0.08)] px-3 py-2 text-[0.72rem] text-warn">
+                  {aliasNote.length} nome(s) a casa exibe diferente — confira o match:
+                  <ul className="mt-1 list-disc pl-4">
+                    {aliasNote.map((a) => (
+                      <li key={a.entidade + a.casa}><span className="font-mono">{a.casa}</span> → {a.entidade}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <button
                 onClick={addBatch}
                 className="flex w-full items-center justify-center rounded-sm border border-line py-2 text-[0.78rem] text-muted transition-colors hover:border-cyan hover:text-cyan"
