@@ -20,13 +20,25 @@ export function OddsTable({ eventId, onChange }: { eventId: string; onChange?: (
 
   const keyOf = (r: OddsRow) => `${r.entidade}|${r.market_type}|${r.linha}|${r.book}`;
 
+  // Re-fetch usado pelos handlers (editar/add/remover). Mostra loading e fica
+  // fora de efeito → não dispara a regra set-state-in-effect.
   async function load() {
     setLoading(true); setError("");
     try { setRows(await getOdds(eventId)); }
     catch (e) { setError(e instanceof Error ? e.message : "erro ao carregar odds"); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [eventId]);
+
+  // Carga inicial: fetch direto no efeito; setState só no callback assíncrono
+  // (não síncrono no corpo do efeito). loading começa true via useState.
+  useEffect(() => {
+    let alive = true;
+    getOdds(eventId)
+      .then((r) => { if (alive) setRows(r); })
+      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : "erro ao carregar odds"); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [eventId]);
 
   const markets = useMemo(() => marketOptions(rows), [rows]);
   const books = useMemo(() => bookOptions(rows), [rows]);
