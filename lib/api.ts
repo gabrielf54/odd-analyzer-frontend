@@ -40,6 +40,22 @@ export interface ManualAnalyzeBody {
 export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
   req<ManualAnalysisResult>("/analise/manual", { method: "POST", body: JSON.stringify(body) });
 
+// ───── Coleta AUTOMÁTICA multi-casa (botão "obter odds") ─────
+// O backend acha o jogo nas casas (KTO + Betnacional), coleta, faz line shopping e grava
+// no `odds`. Pode levar alguns segundos (abre navegador headless p/ a Betnacional/Cloudflare).
+export interface CollectResult {
+  jogo: string;
+  casas: { book: string; ok: boolean; n: number; erro?: string }[];
+  n_por_casa: number;
+  n_line_shop: number;
+  divergencias: { entidade: string; market_type: string; linha: number; spread_pp: number; motivo: string }[];
+  linhas_rejeitadas: number;
+  gravadas: number;
+}
+
+export const coletarOdds = (eventId: string | number) =>
+  req<CollectResult>(`/jogos/${eventId}/coletar-odds`, { method: "POST", body: JSON.stringify({}) });
+
 // ───── Odds persistidas (tabela = fonte de verdade) ─────
 export const getOdds = (eventId: string | number) =>
   req<OddsRow[]>(`/jogos/${eventId}/odds`);

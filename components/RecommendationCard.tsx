@@ -1,6 +1,6 @@
 import type { Candidate, ManualIa } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { lineLabel, displayName, evToReais, riscoLabel, titularidadeInfo } from "@/lib/format";
+import { lineLabel, displayName, evToPct, riscoLabel, titularidadeInfo } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 
@@ -60,7 +60,7 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
 
       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[0.78rem] text-muted">
         <span>modelo <strong className="text-fg">{pct(best.prob_modelo)}</strong> vs casa {pct(best.prob_devig)}</span>
-        <span>retorno esperado <strong className="text-value">{evToReais(best.ev)}</strong></span>
+        <span>valor <strong className="text-value">{evToPct(best.ev)}</strong> <span className="text-faint">lucro esperado no longo prazo</span></span>
       </div>
 
       {vetado ? (

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   getLeagues, getMatches, getOddsPrompt, postAnalyzeManual, postCrosswalk,
-  getOdds, getAnalysis, saveOdds, deleteOdds,
+  getOdds, getAnalysis, saveOdds, deleteOdds, coletarOdds, type CollectResult,
 } from "@/lib/api";
 import { oddsRowsToBatch } from "@/lib/oddsRows";
 import {
@@ -143,9 +143,10 @@ function Browse({
       <div>
         <h1 className="display text-2xl font-extrabold leading-none text-fg">coletar odds</h1>
         <p className="mt-2 max-w-xl text-[0.74rem] leading-relaxed text-muted">
-          sem API de odds barata: você copia o <span className="text-value">prompt</span>, a IA do
-          navegador lê o site da casa e devolve as odds, você cola aqui e o sistema analisa{" "}
-          <span className="text-value">todos os mercados</span> de uma vez. escolha a liga e o jogo.
+          escolha a liga e o jogo. dentro, clique em <span className="text-value">obter odds</span> — o
+          sistema busca nas casas (KTO + Betnacional), escolhe o melhor preço e analisa{" "}
+          <span className="text-value">todos os mercados</span>. casas extras (ex.: Betano) entram pela
+          coleta manual.
         </p>
       </div>
 
@@ -184,6 +185,9 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
   const [editing, setEditing] = useState(false);
   const [detail, setDetail] = useState<Candidate | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+  const [collectError, setCollectError] = useState("");
+  const [collectInfo, setCollectInfo] = useState<CollectResult | null>(null);
 
   // Guarda contra setState depois de desmontar: ao trocar de aba no meio de um
   // request assíncrono (analyze/addBatch/linkPlayer), os handlers não tocam mais
@@ -245,8 +249,26 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
 
   function clearBatch() {
     setBatch([]); setStored(null); setError(""); setEditing(false); setAliasNote([]);
+    setCollectInfo(null); setCollectError("");
     clearStored(eventId);
     deleteOdds(eventId).catch(() => { /* limpeza local já feita; ignora falha de rede */ });
+  }
+
+  // Botão "obter odds": o backend acha o jogo nas casas, coleta, line-shop e grava.
+  // Depois recarrego o lote do banco (a verdade já deduplicada) → pronto pra analisar.
+  async function autoCollect() {
+    setCollectError(""); setCollecting(true);
+    try {
+      const r = await coletarOdds(eventId);
+      const rows = await getOdds(eventId);
+      if (!mountedRef.current) return;
+      setBatch(oddsRowsToBatch(rows));
+      setCollectInfo(r);
+    } catch (e) {
+      if (mountedRef.current) setCollectError(e instanceof Error ? e.message : "erro ao coletar odds");
+    } finally {
+      if (mountedRef.current) setCollecting(false);
+    }
   }
 
   async function analyze() {
@@ -293,8 +315,11 @@ function Detail({ match, onBack }: { match: Match; onBack: () => void }) {
         {time && <span className="overline">{time}</span>}
       </div>
 
-      {/* Copiar prompt fica SEMPRE visível — mesmo na fase resultado o operador
-          pode querer pegar o prompt de outro mercado sem reabrir o lote. */}
+      {/* PASSO 1 automático: o sistema busca as odds nas casas sozinho. */}
+      <AutoCollect collecting={collecting} error={collectError} info={collectInfo} onCollect={autoCollect} />
+
+      {/* Alternativa MANUAL (copiar prompt → colar). Sempre visível: mesmo na fase
+          resultado o operador pode querer outra casa que a coleta automática não cobre. */}
       <PromptCopier eventId={eventId} />
 
       {fase === "resultado" && result ? (
@@ -439,6 +464,58 @@ const PROMPT_GROUPS = [
   },
 ];
 
+/* PASSO 1 automático: chama POST /jogos/:id/coletar-odds (backend acha o jogo nas casas,
+   coleta, line-shop e grava) e mostra o resumo. O lote é recarregado pelo pai. */
+function AutoCollect({
+  collecting, error, info, onCollect,
+}: {
+  collecting: boolean; error: string; info: CollectResult | null; onCollect: () => void;
+}) {
+  return (
+    <Panel title="obter odds (automático)" badge={<Tag tone="value">passo 1</Tag>}>
+      <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
+        o sistema acha o jogo nas casas (<span className="text-value">KTO</span> +{" "}
+        <span className="text-value">Betnacional</span>), coleta, escolhe o melhor preço e grava — sem
+        copiar prompt. depois é só <span className="text-value">analisar tudo</span>.
+      </p>
+      <button onClick={onCollect} disabled={collecting} className="btn w-full justify-center">
+        {collecting ? "coletando nas casas… (pode levar alguns segundos)" : "⟳ obter odds automático"}
+      </button>
+      {error && <div className="mt-2"><ErrorBox msg={error} /></div>}
+      {info && !collecting && (
+        <div className="mt-3 rounded-sm border border-line bg-panel-2 px-3 py-2.5 text-[0.72rem]">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {info.casas.length === 0
+              ? <Tag tone="bad">nenhuma casa achou o jogo</Tag>
+              : info.casas.map((c) => (
+                  <Tag key={c.book} tone={c.ok ? "value" : "bad"}>
+                    {c.book} {c.ok ? `✓ ${c.n}` : `✗ ${c.erro ?? "falhou"}`}
+                  </Tag>
+                ))}
+          </div>
+          <p className="mt-2 text-muted">
+            {info.n_line_shop} linhas após melhor-preço ·{" "}
+            <span className="text-value">{info.gravadas} gravadas no lote</span>
+            {info.linhas_rejeitadas ? ` · ${info.linhas_rejeitadas} recusadas` : ""}
+          </p>
+          {info.divergencias.length > 0 && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-warn">
+                ⚠ {info.divergencias.length} divergência(s) entre casas — revisar
+              </summary>
+              <ul className="mt-1 list-disc pl-4 text-[0.68rem] text-faint">
+                {info.divergencias.slice(0, 6).map((d, i) => (
+                  <li key={i}>{d.entidade} · {d.market_type} {d.linha} · {d.spread_pp}pp</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 function PromptCopier({ eventId }: { eventId: string }) {
   const [active, setActive] = useState<{ market: string; label: string; prompt: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -469,9 +546,9 @@ function PromptCopier({ eventId }: { eventId: string }) {
   }
 
   return (
-    <Panel title="copiar prompt (jogo inteiro)" badge={<Tag tone="cyan">passo 1</Tag>}>
+    <Panel title="copiar prompt (manual — outras casas)" badge={<Tag tone="muted">alternativa</Tag>}>
       <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
-        é um só: cobre o jogo inteiro (partida + jogador) numa coleta. copie, cole na IA do
+        opcional, p/ casas que a coleta automática não cobre (ex.: Betano, bet365): copie, cole na IA do
         navegador (ela lê o site da casa), e volte pra colar o resultado no passo 2.
       </p>
       <div className="grid gap-2">

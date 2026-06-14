@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { lineLabel, displayName, evToReais, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
+import { lineLabel, displayName, evToPct, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
 import { marketNoun } from "@/lib/detailText";
 import { applyFilters, toggleIn } from "@/lib/candidateFilters";
 import type { CandidateFilters } from "@/lib/candidateFilters";
@@ -168,7 +168,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.72rem] text-muted">
                       <span>modelo <strong className="text-fg">{pct(c.prob_modelo)}</strong> vs casa {pct(c.prob_devig)}</span>
-                      <span>retorno <strong className="text-value">{evToReais(c.ev)}</strong></span>
+                      <span>valor <strong className="text-value">{evToPct(c.ev)}</strong> <span className="text-faint">lucro esperado no longo prazo</span></span>
                     </div>
                   </div>
                 );
