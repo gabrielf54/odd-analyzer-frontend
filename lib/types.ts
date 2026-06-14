@@ -66,6 +66,9 @@ export interface Candidate {
   risco?: "seguro" | "moderado" | "tiro_longo";
   recomendado?: boolean;
   ia_revisao?: { stance: "concorda" | "ressalva" | "veta"; nota: string | null } | null;
+  // Casa (book) que deu a odd usada + comparação cross-casa (já vêm do backend).
+  book?: string | null;
+  casas_comparadas?: { book: string; odd_over: number }[];
 }
 
 export interface ManualIa { topo_explicacao: string | null; alertas: string[]; }

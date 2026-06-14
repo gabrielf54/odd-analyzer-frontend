@@ -50,12 +50,13 @@ export function displayName(c: Pick<LineFields, "market_type" | "jogador">): str
   return c.jogador;
 }
 
-/** EV (lucro por R$1 no longo prazo) → "+R$2,75 / R$10". */
-export function evToReais(ev: number): string {
-  const por10 = ev * 10;
-  const sinal = por10 >= 0 ? "+" : "−";
-  const valor = Math.abs(por10).toFixed(2).replace(".", ",");
-  return `${sinal}R$${valor} / R$10`;
+/** EV como percentual de vantagem → "+28%". É o lucro médio por R$1 apostado no
+ * longo prazo (ev = prob_modelo×odd − 1). Mostra como % e não como "R$2,87 / R$10"
+ * porque o leigo lia o R$ como ganho de UMA aposta — e é média de muitas. */
+export function evToPct(ev: number): string {
+  const pontos = Math.round(ev * 100);
+  const sinal = pontos >= 0 ? "+" : "−";
+  return `${sinal}${Math.abs(pontos)}%`;
 }
 
 export type Risco = NonNullable<Candidate["risco"]>;

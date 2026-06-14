@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { friendlyLine, lineLabel, displayName, vitoriaOutcome, evToReais, riscoLabel, friendlyRejection } from "./format";
+import { friendlyLine, lineLabel, displayName, vitoriaOutcome, evToPct, riscoLabel, friendlyRejection } from "./format";
 
 describe("friendlyLine", () => {
   it("converte over X.5 em 'N+' com o mercado por extenso", () => {
@@ -50,10 +50,12 @@ describe("displayName", () => {
   });
 });
 
-describe("evToReais", () => {
-  it("mostra lucro esperado por R$10, com vírgula decimal e sinal", () => {
-    expect(evToReais(0.275)).toBe("+R$2,75 / R$10");
-    expect(evToReais(1.089)).toBe("+R$10,89 / R$10");
+describe("evToPct", () => {
+  it("mostra a vantagem como % com sinal, arredondado", () => {
+    expect(evToPct(0.2825)).toBe("+28%"); // card real: modelo 45% @ 2.85
+    expect(evToPct(0.275)).toBe("+28%"); // 27,5 arredonda p/ cima
+    expect(evToPct(0.898)).toBe("+90%"); // EV alto vira % grande
+    expect(evToPct(-0.05)).toBe("−5%"); // negativo usa o mesmo minus do código
   });
 });
 

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
-import { lineLabel, displayName, evToReais, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
+import { BookBadge } from "@/components/BookBadge";
+import { lineLabel, displayName, evToPct, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
 import { marketNoun } from "@/lib/detailText";
 import { applyFilters, toggleIn } from "@/lib/candidateFilters";
 import type { CandidateFilters } from "@/lib/candidateFilters";
@@ -153,6 +154,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
                         {lineLabel(c)}
                       </span>
                       <span className="mono text-xs text-muted">@ {c.odd}</span>
+                      {c.book && <BookBadge book={c.book} />}
                       {risco && <Tag tone={risco.tone}>{risco.emoji} {risco.texto}</Tag>}
                       {c.ia_revisao && (
                         <span className="text-sm" title={c.ia_revisao.nota ?? STANCE_TEXTO[c.ia_revisao.stance]}>
@@ -168,7 +170,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.72rem] text-muted">
                       <span>modelo <strong className="text-fg">{pct(c.prob_modelo)}</strong> vs casa {pct(c.prob_devig)}</span>
-                      <span>retorno <strong className="text-value">{evToReais(c.ev)}</strong></span>
+                      <span>valor <strong className="text-value">{evToPct(c.ev)}</strong> <span className="text-faint">lucro esperado no longo prazo</span></span>
                     </div>
                   </div>
                 );

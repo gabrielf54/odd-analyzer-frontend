@@ -40,6 +40,22 @@ export interface ManualAnalyzeBody {
 export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
   req<ManualAnalysisResult>("/analise/manual", { method: "POST", body: JSON.stringify(body) });
 
+// ───── Coleta AUTOMÁTICA multi-casa (botão "obter odds") ─────
+// O backend acha o jogo nas casas (KTO + Betnacional), coleta, faz line shopping e grava
+// no `odds`. Pode levar alguns segundos (abre navegador headless p/ a Betnacional/Cloudflare).
+export interface CollectResult {
+  jogo: string;
+  casas: { book: string; ok: boolean; n: number; erro?: string }[];
+  n_por_casa: number;
+  n_line_shop: number;
+  divergencias: { entidade: string; market_type: string; linha: number; spread_pp: number; motivo: string }[];
+  linhas_rejeitadas: number;
+  gravadas: number;
+}
+
+export const coletarOdds = (eventId: string | number) =>
+  req<CollectResult>(`/jogos/${eventId}/coletar-odds`, { method: "POST", body: JSON.stringify({}) });
+
 // ───── Odds persistidas (tabela = fonte de verdade) ─────
 export const getOdds = (eventId: string | number) =>
   req<OddsRow[]>(`/jogos/${eventId}/odds`);
@@ -53,6 +69,25 @@ export const saveOdds = (body: ManualAnalyzeBody) =>
 
 export const deleteOdds = (eventId: string | number) =>
   req<{ ok: true }>(`/jogos/${eventId}/odds`, { method: "DELETE" });
+
+// Upsert de UMA odd (editar valor OU adicionar linha). Mesma PK
+// (entidade,market_type,linha,book) => o backend sobrescreve.
+export const saveOdd = (eventId: string | number, line: ManualOddsLine) =>
+  saveOdds({ event_id: String(eventId), coletado_em: new Date().toISOString(), odds: [line] });
+
+// Remove UMA odd via filtro na querystring (DELETE /jogos/:id/odds).
+export const removeOdd = (
+  eventId: string | number,
+  filter: { entidade: string; market_type: string; linha: number; book: string },
+) => {
+  const qs = new URLSearchParams({
+    entidade: filter.entidade,
+    market_type: filter.market_type,
+    linha: String(filter.linha),
+    book: filter.book,
+  });
+  return req<{ ok: true }>(`/jogos/${eventId}/odds?${qs.toString()}`, { method: "DELETE" });
+};
 
 // Liga um nome da casa a um jogador (stats-id) e persiste no crosswalk.
 export const postCrosswalk = (nome_casa: string, player_id: string) =>
