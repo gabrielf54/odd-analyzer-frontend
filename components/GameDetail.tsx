@@ -36,7 +36,8 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   const [batch, setBatch] = useState<ManualOddsLine[]>([]);
   const [pasteError, setPasteError] = useState("");
   const [aliasNote, setAliasNote] = useState<{ entidade: string; casa: string }[]>([]);
-  const [stored, setStored] = useState<StoredResult | null>(null);
+  // Inicializa do cache local (síncrono) → o efeito só faz a busca assíncrona no banco.
+  const [stored, setStored] = useState<StoredResult | null>(() => loadResult(eventId));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [detail, setDetail] = useState<Candidate | null>(null);
@@ -58,7 +59,6 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   // é só cache/fallback offline.
   useEffect(() => {
     let vivo = true;
-    setStored(loadResult(eventId)); // otimista do cache enquanto o banco responde
     getAnalysis(eventId)
       .then((a) => { if (vivo && a) { setStored(a); saveResult(eventId, a); } })
       .catch(() => { /* sem banco: mantém o cache local já setado */ });
@@ -239,11 +239,6 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
                   </div>
                 </div>
               )}
-
-              <button onClick={analyze} disabled={loading || batch.length === 0} className="btn w-full justify-center">
-                {loading ? "analisando…" : "▸ analisar tudo"}
-              </button>
-              {error && <ErrorBox msg={error} />}
             </div>
           </Panel>
 
@@ -251,10 +246,19 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
           <Panel title="odds carregadas (investigar / editar)" badge={<Tag tone="muted">banco</Tag>}>
             <OddsTable eventId={eventId} onChange={reloadBatch} />
           </Panel>
+
+          {batch.length > 0 && (
+            <button
+              onClick={() => setAba("analise")}
+              className="btn w-full justify-center"
+            >
+              {batch.length} odds no lote · ir pra análise ›
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {result && (
+          {result ? (
             <BatchSummaryBar
               count={batch.length}
               analisadoEm={stored?.analisado_em ?? null}
@@ -262,19 +266,28 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
               onEdit={() => setAba("odds")}
               onReanalyze={analyze}
             />
+          ) : (
+            <Panel title="rodar análise" badge={<Tag tone="value">Etapa 2</Tag>}>
+              <div className="flex flex-col gap-3">
+                <p className="text-[0.74rem] leading-relaxed text-muted">
+                  {batch.length > 0 ? (
+                    <><strong className="text-fg">{batch.length}</strong> odds no lote, prontas. clique pra cruzar com o modelo e ver as apostas de valor.</>
+                  ) : (
+                    <>nenhuma odd no lote — colete primeiro na <button onClick={() => setAba("odds")} className="text-value underline">Etapa 1 · Odds</button>.</>
+                  )}
+                </p>
+                <button onClick={analyze} disabled={loading || batch.length === 0} className="btn w-full justify-center">
+                  {loading ? "analisando…" : "▸ analisar tudo"}
+                </button>
+              </div>
+            </Panel>
           )}
+
+          {error && <ErrorBox msg={error} />}
 
           {loading && (
             <Panel className="grid min-h-[200px] place-items-center">
               <p className="mono text-sm text-value">cruzando estatísticas<span className="blink">_</span></p>
-            </Panel>
-          )}
-
-          {!result && !loading && (
-            <Panel className="grid min-h-[200px] place-items-center">
-              <p className="mono text-center text-xs text-muted">
-                rode a análise na <button onClick={() => setAba("odds")} className="text-value underline">Etapa 1 · Odds</button>.
-              </p>
             </Panel>
           )}
 
