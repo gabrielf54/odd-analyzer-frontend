@@ -31,6 +31,8 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   // Abre na aba "análise" se já existe resultado em cache (reabrir jogo analisado);
   // senão começa na Etapa 1 (odds). loadResult é síncrono (localStorage).
   const [aba, setAba] = useState<Aba>(() => (loadResult(eventId)?.result ? "analise" : "odds"));
+  // Entrada manual (colar / prompt) é legado raro → escondida por padrão.
+  const [showManual, setShowManual] = useState(false);
 
   const [paste, setPaste] = useState("");
   const [batch, setBatch] = useState<ManualOddsLine[]>([]);
@@ -191,57 +193,6 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
         <div className="flex flex-col gap-4">
           <AutoCollect collecting={collecting} error={collectError} info={collectInfo} onCollect={autoCollect} />
 
-          <PromptCopier eventId={eventId} />
-
-          <Panel title="colar odds da IA" badge={<Tag tone="cyan">manual</Tag>}>
-            <div className="flex flex-col gap-3">
-              <Field
-                label="cole aqui o que a IA devolveu"
-                hint="formato compacto (book no topo, campos por |) ou JSON — pode colar um mercado por vez, vão se somando ao lote."
-              >
-                <textarea
-                  className="input min-h-[120px] font-mono text-[0.72rem]"
-                  value={paste}
-                  onChange={(e) => setPaste(e.target.value)}
-                  placeholder={"book=bet365\nsot|K. Havertz|0.5|2.1\ndesarmes|J. Kimmich|1.5|1.9"}
-                />
-              </Field>
-              {pasteError && <ErrorBox msg={pasteError} />}
-              {aliasNote.length > 0 && (
-                <div className="rounded-sm border border-warn/40 bg-[rgba(255,177,61,0.08)] px-3 py-2 text-[0.72rem] text-warn">
-                  {aliasNote.length} nome(s) a casa exibe diferente — confira o match:
-                  <ul className="mt-1 list-disc pl-4">
-                    {aliasNote.map((a) => (
-                      <li key={a.entidade + a.casa}><span className="font-mono">{a.casa}</span> → {a.entidade}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <button
-                onClick={addBatch}
-                className="flex w-full items-center justify-center rounded-sm border border-line py-2 text-[0.78rem] text-muted transition-colors hover:border-cyan hover:text-cyan"
-              >
-                ＋ adicionar ao lote
-              </button>
-
-              {batch.length > 0 && (
-                <div className="rounded-sm border border-line bg-panel-2 px-3 py-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="overline">lote · {batch.length} linhas</span>
-                    <button onClick={clearBatch} className="text-[0.7rem] text-faint transition-colors hover:text-bad">
-                      limpar lote
-                    </button>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {Object.entries(counts).map(([m, n]) => (
-                      <Tag key={m} tone="muted">{m} · {n}</Tag>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Panel>
-
           {/* Tela investigativa: todas as odds no banco, com filtro e edição manual. */}
           <Panel title="odds carregadas (investigar / editar)" badge={<Tag tone="muted">banco</Tag>}>
             <OddsTable eventId={eventId} onChange={reloadBatch} />
@@ -255,6 +206,75 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
               {batch.length} odds no lote · ir pra análise ›
             </button>
           )}
+
+          {/* Entrada manual (colar odds · copiar prompt): legado, raramente usado.
+              Recolhida por padrão — a coleta automática é o caminho. Não ocupa a tela. */}
+          <div className="rounded-sm border border-line-soft">
+            <button
+              onClick={() => setShowManual((v) => !v)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.72rem] text-muted transition-colors hover:text-fg"
+              aria-expanded={showManual}
+            >
+              <span className={`text-faint transition-transform ${showManual ? "rotate-90" : ""}`}>▸</span>
+              entrada manual <span className="text-faint">(colar odds · copiar prompt)</span>
+              <span className="ml-auto text-[0.62rem] uppercase tracking-[0.16em] text-faint">raramente usado</span>
+            </button>
+
+            {showManual && (
+              <div className="flex flex-col gap-4 border-t border-line-soft p-3">
+                <Panel title="colar odds da IA" badge={<Tag tone="cyan">manual</Tag>}>
+                  <div className="flex flex-col gap-3">
+                    <Field
+                      label="cole aqui o que a IA devolveu"
+                      hint="formato compacto (book no topo, campos por |) ou JSON — pode colar um mercado por vez, vão se somando ao lote."
+                    >
+                      <textarea
+                        className="input min-h-[120px] font-mono text-[0.72rem]"
+                        value={paste}
+                        onChange={(e) => setPaste(e.target.value)}
+                        placeholder={"book=bet365\nsot|K. Havertz|0.5|2.1\ndesarmes|J. Kimmich|1.5|1.9"}
+                      />
+                    </Field>
+                    {pasteError && <ErrorBox msg={pasteError} />}
+                    {aliasNote.length > 0 && (
+                      <div className="rounded-sm border border-warn/40 bg-[rgba(255,177,61,0.08)] px-3 py-2 text-[0.72rem] text-warn">
+                        {aliasNote.length} nome(s) a casa exibe diferente — confira o match:
+                        <ul className="mt-1 list-disc pl-4">
+                          {aliasNote.map((a) => (
+                            <li key={a.entidade + a.casa}><span className="font-mono">{a.casa}</span> → {a.entidade}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <button
+                      onClick={addBatch}
+                      className="flex w-full items-center justify-center rounded-sm border border-line py-2 text-[0.78rem] text-muted transition-colors hover:border-cyan hover:text-cyan"
+                    >
+                      ＋ adicionar ao lote
+                    </button>
+
+                    {batch.length > 0 && (
+                      <div className="rounded-sm border border-line bg-panel-2 px-3 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="overline">lote · {batch.length} linhas</span>
+                          <button onClick={clearBatch} className="text-[0.7rem] text-faint transition-colors hover:text-bad">
+                            limpar lote
+                          </button>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {Object.entries(counts).map(([m, n]) => (
+                            <Tag key={m} tone="muted">{m} · {n}</Tag>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Panel>
+
+                <PromptCopier eventId={eventId} />
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
