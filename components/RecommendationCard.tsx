@@ -1,5 +1,6 @@
 import type { Candidate, ManualIa } from "@/lib/types";
 import { Tag } from "@/components/ui";
+import { BookBadge } from "@/components/BookBadge";
 import { lineLabel, displayName, evToPct, riscoLabel, titularidadeInfo } from "@/lib/format";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
@@ -49,7 +50,8 @@ export function RecommendationCard({ candidates, ia }: { candidates: Candidate[]
         <span className={vetado ? "text-bad" : "text-value"}>
           {lineLabel(best)}
         </span>{" "}
-        <span className="mono text-base text-muted">@ {best.odd}</span>
+        <span className="mono text-base text-muted">@ {best.odd}</span>{" "}
+        {best.book && <BookBadge book={best.book} size="md" />}
       </p>
 
       {best.alerta_minutos && (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
+import { BookBadge } from "@/components/BookBadge";
 import { lineLabel, displayName, evToPct, riscoLabel, titularidadeInfo, posicaoLabel } from "@/lib/format";
 import { marketNoun } from "@/lib/detailText";
 import { applyFilters, toggleIn } from "@/lib/candidateFilters";
@@ -153,6 +154,7 @@ export function CandidatesByPlayer({ candidates, onDetail }: { candidates: Candi
                         {lineLabel(c)}
                       </span>
                       <span className="mono text-xs text-muted">@ {c.odd}</span>
+                      {c.book && <BookBadge book={c.book} />}
                       {risco && <Tag tone={risco.tone}>{risco.emoji} {risco.texto}</Tag>}
                       {c.ia_revisao && (
                         <span className="text-sm" title={c.ia_revisao.nota ?? STANCE_TEXTO[c.ia_revisao.stance]}>

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { Candidate } from "@/lib/types";
 import { Tag } from "@/components/ui";
+import { BookBadge } from "@/components/BookBadge";
 import { lineLabel, displayName, posicaoLabel, titularidadeInfo } from "@/lib/format";
 import { playerStatLines, confrontoLines } from "@/lib/detailText";
 
@@ -32,7 +33,8 @@ export function PlayerDetailDrawer({ candidate, onClose }: { candidate: Candidat
             <h2 className="display text-xl font-extrabold text-fg">{displayName(c)}</h2>
             <p className="mt-0.5 text-[0.72rem] text-muted">
               {posLabel && <>{posLabel} · </>}
-              {lineLabel(c)} <span className="mono">@ {c.odd}</span>
+              {lineLabel(c)} <span className="mono">@ {c.odd}</span>{" "}
+              {c.book && <BookBadge book={c.book} />}
             </p>
             {tit && <div className="mt-1.5"><Tag tone={tit.tone}>{tit.texto}</Tag></div>}
           </div>
