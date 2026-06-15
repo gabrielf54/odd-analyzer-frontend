@@ -134,14 +134,14 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   async function clearAllOdds() {
     const ok = await confirm({
       title: "Apagar todas as odds?",
-      message: "Isso remove TODAS as odds deste jogo do banco. Não dá pra desfazer.",
+      message: "Isso remove TODAS as odds deste jogo do banco — e a ANÁLISE salva junto (ela depende dessas odds). Não dá pra desfazer.",
       confirmLabel: "Apagar tudo",
       tone: "bad",
     });
     if (!ok) return;
     setError(""); setCollectError("");
     try {
-      await deleteOdds(eventId);
+      await deleteOdds(eventId); // backend: clear total também apaga a análise órfã
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "erro ao apagar odds");
       return;
@@ -150,7 +150,8 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     setBatch([]); setStored(null); setAliasNote([]); setCollectInfo(null);
     clearStored(eventId);
     setOddsVersion((v) => v + 1);
-    toast.success("Todas as odds deste jogo foram apagadas.");
+    setAba("coletar"); // a análise sumiu → volta pro começo do fluxo
+    toast.success("Odds e análise deste jogo foram apagadas.");
   }
 
   async function autoCollect() {
