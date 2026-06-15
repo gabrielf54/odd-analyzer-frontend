@@ -41,8 +41,9 @@ export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
   req<ManualAnalysisResult>("/analise/manual", { method: "POST", body: JSON.stringify(body) });
 
 // ───── Coleta AUTOMÁTICA multi-casa (botão "obter odds") ─────
-// O backend acha o jogo nas casas (KTO + Betnacional), coleta, faz line shopping e grava
-// no `odds`. Pode levar alguns segundos (abre navegador headless p/ a Betnacional/Cloudflare).
+// O backend acha o jogo nas casas (KTO + Betnacional + Superbet), coleta, faz line shopping
+// e grava no `odds`. Pode levar alguns segundos (abre navegador headless p/ a Betnacional/Cloudflare;
+// KTO e Superbet são fetch puro).
 export interface CollectResult {
   jogo: string;
   casas: { book: string; ok: boolean; n: number; erro?: string }[];

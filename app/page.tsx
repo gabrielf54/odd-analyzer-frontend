@@ -19,8 +19,9 @@ function Collect() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState("");
-  // Modo foco: oculta as colunas de ligas e jogos p/ expandir o jogo aberto.
-  const [railsHidden, setRailsHidden] = useState(false);
+  // Collapse independente de cada coluna (botão no título de cada lista).
+  const [leaguesCollapsed, setLeaguesCollapsed] = useState(false);
+  const [matchesCollapsed, setMatchesCollapsed] = useState(false);
 
   // Abas abertas (estilo VSCode): lista de jogos persistida; a aba ativa é a URL.
   const [tabs, setTabs] = useState<Match[]>([]);
@@ -82,37 +83,34 @@ function Collect() {
 
   return (
     <div className="flex gap-3">
-      {!railsHidden && (
-        <>
-          {/* coluna 1 — ligas */}
-          <aside className="w-[150px] shrink-0 lg:sticky lg:top-24 lg:self-start">
-            <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
-          </aside>
+      {/* coluna 1 — ligas */}
+      {leaguesCollapsed ? (
+        <CollapsedStrip label="ligas" onExpand={() => setLeaguesCollapsed(false)} />
+      ) : (
+        <aside className="w-[150px] shrink-0 lg:sticky lg:top-24 lg:self-start">
+          <RailHeader title="ligas" onCollapse={() => setLeaguesCollapsed(true)} />
+          <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
+        </aside>
+      )}
 
-          {/* coluna 2 — jogos da liga selecionada */}
-          <aside className="w-[180px] shrink-0 lg:sticky lg:top-24 lg:self-start">
-            <span className="overline mb-2 block">jogos</span>
-            <MatchRail
-              matches={matches}
-              activeId={matchId}
-              onSelect={openMatch}
-              loading={loadingMatches}
-              empty={leagueId ? "sem jogos não iniciados" : "escolha uma liga"}
-            />
-          </aside>
-        </>
+      {/* coluna 2 — jogos da liga selecionada */}
+      {matchesCollapsed ? (
+        <CollapsedStrip label="jogos" onExpand={() => setMatchesCollapsed(false)} />
+      ) : (
+        <aside className="w-[180px] shrink-0 lg:sticky lg:top-24 lg:self-start">
+          <RailHeader title="jogos" onCollapse={() => setMatchesCollapsed(true)} />
+          <MatchRail
+            matches={matches}
+            activeId={matchId}
+            onSelect={openMatch}
+            loading={loadingMatches}
+            empty={leagueId ? "sem jogos não iniciados" : "escolha uma liga"}
+          />
+        </aside>
       )}
 
       {/* coluna 3 — conteúdo (abas + jogo aberto) */}
       <section className="flex min-w-0 flex-1 flex-col gap-4">
-        <button
-          onClick={() => setRailsHidden((v) => !v)}
-          className="overline self-start transition-colors hover:text-fg"
-          title={railsHidden ? "mostrar ligas e jogos" : "ocultar ligas e jogos (foco no jogo)"}
-        >
-          {railsHidden ? "☰ mostrar ligas e jogos" : "⟨ ocultar listas · foco"}
-        </button>
-
         <GameTabs
           tabs={tabs}
           activeId={matchId}
@@ -140,6 +138,40 @@ function Collect() {
         )}
       </section>
     </div>
+  );
+}
+
+/* Cabeçalho de uma coluna-lista: título + botão de recolher. */
+function RailHeader({ title, onCollapse }: { title: string; onCollapse: () => void }) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <span className="overline">{title}</span>
+      <button
+        onClick={onCollapse}
+        title={`ocultar ${title}`}
+        aria-label={`ocultar ${title}`}
+        className="px-1 text-faint transition-colors hover:text-fg"
+      >
+        ⟨
+      </button>
+    </div>
+  );
+}
+
+/* Coluna recolhida: faixa fina vertical com o nome + botão de expandir. */
+function CollapsedStrip({ label, onExpand }: { label: string; onExpand: () => void }) {
+  return (
+    <aside className="shrink-0 lg:sticky lg:top-24 lg:self-start">
+      <button
+        onClick={onExpand}
+        title={`mostrar ${label}`}
+        aria-label={`mostrar ${label}`}
+        className="flex flex-col items-center gap-2 rounded-sm border border-line-soft px-1.5 py-2 text-faint transition-colors hover:border-line hover:text-fg"
+      >
+        <span>⟩</span>
+        <span className="overline" style={{ writingMode: "vertical-rl" }}>{label}</span>
+      </button>
+    </aside>
   );
 }
 

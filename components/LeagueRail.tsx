@@ -24,8 +24,6 @@ export function LeagueRail({
 
   return (
     <nav className="flex flex-col gap-2">
-      <span className="overline block">ligas</span>
-
       <input
         className="input"
         value={q}

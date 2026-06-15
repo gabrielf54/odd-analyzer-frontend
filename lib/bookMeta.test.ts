@@ -5,14 +5,17 @@ describe("bookMeta", () => {
   it("kto vira sigla KTO", () => {
     expect(bookMeta("kto").sigla).toBe("KTO");
   });
-  it("betnacional vira sigla BET", () => {
-    expect(bookMeta("betnacional").sigla).toBe("BET");
+  it("betnacional vira sigla BETNACIONAL (nome cheio, pedido do dono)", () => {
+    expect(bookMeta("betnacional").sigla).toBe("BETNACIONAL");
+  });
+  it("superbet vira sigla SUPERBET", () => {
+    expect(bookMeta("superbet").sigla).toBe("SUPERBET");
   });
   it("manual vira sigla MAN", () => {
     expect(bookMeta("manual").sigla).toBe("MAN");
   });
   it("casa desconhecida usa 3 primeiras letras maiusculas", () => {
-    expect(bookMeta("superbet").sigla).toBe("SUP");
+    expect(bookMeta("pinnacle").sigla).toBe("PIN");
   });
   it("null/undefined cai em manual", () => {
     expect(bookMeta(null).sigla).toBe("MAN");

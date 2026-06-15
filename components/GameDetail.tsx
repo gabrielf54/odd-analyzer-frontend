@@ -388,7 +388,8 @@ function AutoCollect({
     <Panel title="obter odds (automático)" badge={<Tag tone="value">recomendado</Tag>}>
       <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
         o sistema acha o jogo nas casas (<span className="text-value">KTO</span> +{" "}
-        <span className="text-value">Betnacional</span>), coleta, escolhe o melhor preço e grava — sem
+        <span className="text-value">Betnacional</span> +{" "}
+        <span className="text-value">Superbet</span>), coleta, escolhe o melhor preço e grava — sem
         copiar prompt. depois é só <span className="text-value">analisar tudo</span>.
       </p>
       <button onClick={onCollect} disabled={collecting} className="btn w-full justify-center">
