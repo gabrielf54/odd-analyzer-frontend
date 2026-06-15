@@ -123,3 +123,20 @@ export interface OddsRow {
   coletado_em?: string;
 }
 
+// Linha do ESPELHO canônico (tabela `odds_unificadas`): 1 por aposta, melhor preço.
+// É o que a ANÁLISE consome; a tabela crua `odds` fica só como log.
+export interface UnifiedOddsRow {
+  event_id: string;
+  entidade_norm: string;
+  market_type: string;
+  linha: number;
+  entidade: string;
+  odd_over: number;
+  odd_under: number | null;
+  book: string;
+  casas_comparadas: { book: string; odd_over: number }[];
+  divergencia: boolean;
+  spread_pp: number | null;
+  coletado_em?: string;
+}
+

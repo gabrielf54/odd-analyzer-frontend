@@ -2,7 +2,7 @@
 import type {
   League, Match,
   ManualOddsLine, ManualAnalysisResult,
-  OddsRow, LinhaRejeitada,
+  OddsRow, UnifiedOddsRow, LinhaRejeitada,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -63,6 +63,20 @@ export const coletarOdds = (eventId: string | number) =>
 // ───── Odds persistidas (tabela = fonte de verdade) ─────
 export const getOdds = (eventId: string | number) =>
   req<OddsRow[]>(`/jogos/${eventId}/odds`);
+
+// ───── Odds unificadas (espelho canônico = o que a análise considera) ─────
+export interface UnificarResult {
+  n_cru: number;
+  n_unificado: number;
+  divergencias: CollectResult["divergencias"];
+  linhas: UnifiedOddsRow[];
+}
+// "Unificar odds": re-gera o espelho (line shopping) e devolve o resumo.
+export const unificarOdds = (eventId: string | number) =>
+  req<UnificarResult>(`/jogos/${eventId}/unificar-odds`, { method: "POST", body: JSON.stringify({}) });
+
+export const getOddsUnificadas = (eventId: string | number) =>
+  req<UnifiedOddsRow[]>(`/jogos/${eventId}/odds-unificadas`);
 
 // Resultado completo da última análise manual (banco = fonte de verdade), ou null.
 export const getAnalysis = (eventId: string | number) =>
