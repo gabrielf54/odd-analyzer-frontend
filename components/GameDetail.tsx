@@ -201,11 +201,9 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     if (batch.length === 0) return;
     setError(""); setLoading(true);
     try {
-      const r = await postAnalyzeManual({
-        event_id: eventId,
-        coletado_em: new Date().toISOString(),
-        odds: batch,
-      });
+      // Odds já estão no banco (coletarOdds/saveOdds gravam + espelham); o backend re-lê de lá.
+      // Mandamos só o event_id — não reenviamos o `batch` (era redundante e inchava o payload).
+      const r = await postAnalyzeManual(eventId);
       const s = { result: r, analisado_em: new Date().toISOString() };
       saveResult(eventId, s); // persiste ANTES do guard → sobrevive à troca de aba
       if (!mountedRef.current) return;

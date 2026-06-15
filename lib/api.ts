@@ -36,9 +36,15 @@ export interface ManualAnalyzeBody {
   odds: ManualOddsLine[];
 }
 
-// Cola o JSON de odds → análise geral de todos os mercados.
-export const postAnalyzeManual = (body: ManualAnalyzeBody) =>
-  req<ManualAnalysisResult>("/analise/manual", { method: "POST", body: JSON.stringify(body) });
+// Dispara a análise. As odds são FONTE DE VERDADE na tabela `odds` do backend (gravadas por
+// coletarOdds e saveOdds, que já re-espelham); o backend re-lê de lá (reprojectUnifiedOdds) e
+// analisa. NÃO reenviamos as odds no corpo — era redundante (o front só espelha a tabela) e
+// inchava o payload (chegou a estourar o limite JSON). Mandamos só o event_id + escopo.
+export const postAnalyzeManual = (eventId: string | number, escopoHistorico = "todos") =>
+  req<ManualAnalysisResult>("/analise/manual", {
+    method: "POST",
+    body: JSON.stringify({ event_id: String(eventId), escopo_historico: escopoHistorico }),
+  });
 
 // ───── Coleta AUTOMÁTICA multi-casa (botão "obter odds") ─────
 // O backend acha o jogo nas casas (KTO + Betnacional + Superbet), coleta, faz line shopping

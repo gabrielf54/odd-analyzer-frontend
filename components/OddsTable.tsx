@@ -5,6 +5,7 @@ import { filterOdds, marketOptions, bookOptions } from "@/lib/oddsTable";
 import type { OddsFilters } from "@/lib/oddsTable";
 import type { OddsRow, ManualOddsLine } from "@/lib/types";
 import { BookBadge } from "@/components/BookBadge";
+import { bookMeta } from "@/lib/bookMeta";
 import { ErrorBox } from "@/components/ui";
 import { marketNoun } from "@/lib/detailText";
 
@@ -86,8 +87,8 @@ export function OddsTable({ eventId, onChange, reloadSignal, onClearAll }: {
         {books.length > 0 && <span className="mx-1 text-faint">·</span>}
         {books.map((b) => (
           <button key={b} onClick={() => setFilters((f) => ({ ...f, books: toggle(f.books, b) }))}
-            className={`rounded-sm border px-1 py-0.5 ${filters.books.includes(b) ? "border-value/50" : "border-line opacity-60"}`}>
-            <BookBadge book={b} />
+            className={`rounded-sm border px-2 py-0.5 text-[0.66rem] ${filters.books.includes(b) ? `border-value/50 ${bookMeta(b).textClass}` : "border-line text-faint"}`}>
+            {bookMeta(b).sigla}
           </button>
         ))}
       </div>
