@@ -26,7 +26,7 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
-type Aba = "odds" | "analise";
+type Aba = "coletar" | "unificar" | "analise";
 
 export function GameDetail({ match, onBack }: { match: Match; onBack: () => void }) {
   const time = localTime(match.data);
@@ -36,7 +36,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
   // Abre na aba "análise" se já existe resultado em cache (reabrir jogo analisado);
   // senão começa na Etapa 1 (odds). loadResult é síncrono (localStorage).
-  const [aba, setAba] = useState<Aba>(() => (loadResult(eventId)?.result ? "analise" : "odds"));
+  const [aba, setAba] = useState<Aba>(() => (loadResult(eventId)?.result ? "analise" : "coletar"));
   // Entrada manual (colar / prompt) é legado raro → escondida por padrão.
   const [showManual, setShowManual] = useState(false);
 
@@ -213,29 +213,24 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
         {time && <span className="overline">{time}</span>}
       </div>
 
-      {/* Abas: Etapa 1 (odds) / Etapa 2 (análise) — troca livre. */}
+      {/* Abas: Etapa 1 (coletar) / Etapa 2 (unificar) / Etapa 3 (análise) — troca livre. */}
       <div className="flex items-stretch border-b border-line">
-        {(["odds", "analise"] as const).map((t) => (
+        {(["coletar", "unificar", "analise"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setAba(t)}
             className={`relative px-4 py-2 text-[0.72rem] transition-colors ${aba === t ? "text-value" : "text-faint hover:text-muted"}`}
           >
             {aba === t && <span className="absolute inset-x-0 top-0 h-[2px] bg-value shadow-[0_0_10px_rgba(37,224,138,0.6)]" />}
-            {t === "odds" ? "Etapa 1 · Odds" : "Etapa 2 · Análise"}
+            {t === "coletar" ? "Etapa 1 · Coletar" : t === "unificar" ? "Etapa 2 · Unificar" : "Etapa 3 · Análise"}
             {t === "analise" && result && <span className="ml-1.5 text-value">●</span>}
           </button>
         ))}
       </div>
 
-      {aba === "odds" ? (
+      {aba === "coletar" && (
         <div className="flex flex-col gap-4">
           <AutoCollect collecting={collecting} error={collectError} info={collectInfo} onCollect={autoCollect} />
-
-          {/* Espelho canônico: 1 aposta por linha, melhor preço — o que a ANÁLISE considera. */}
-          <Panel title="odds unificadas (o que a análise considera)" badge={<Tag tone="value">decisão</Tag>}>
-            <UnifiedOddsTable eventId={eventId} reloadSignal={oddsVersion} />
-          </Panel>
 
           {/* Log cru: todas as casas/grafias no banco, com filtro e edição manual. */}
           <Panel title="odds cruas (log · todas as casas)" badge={<Tag tone="muted">log</Tag>}>
@@ -244,10 +239,10 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
           {batch.length > 0 && (
             <button
-              onClick={() => setAba("analise")}
+              onClick={() => setAba("unificar")}
               className="btn w-full justify-center"
             >
-              {batch.length} odds no lote · ir pra análise ›
+              {batch.length} odds no lote · conferir odds unificadas ›
             </button>
           )}
 
@@ -320,24 +315,43 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {aba === "unificar" && (
+        <div className="flex flex-col gap-4">
+          {/* Espelho canônico: 1 aposta por linha, melhor preço — o que a ANÁLISE considera.
+              Confira aqui o que o line shopping decidiu antes de analisar. */}
+          <Panel title="odds unificadas (o que a análise considera)" badge={<Tag tone="value">decisão</Tag>}>
+            <UnifiedOddsTable eventId={eventId} reloadSignal={oddsVersion} />
+          </Panel>
+
+          <button
+            onClick={() => setAba(batch.length > 0 ? "analise" : "coletar")}
+            className="btn w-full justify-center"
+          >
+            {batch.length > 0 ? "ir pra análise ›" : "‹ voltar pra coletar"}
+          </button>
+        </div>
+      )}
+
+      {aba === "analise" && (
         <div className="flex flex-col gap-4">
           {result ? (
             <BatchSummaryBar
               count={batch.length}
               analisadoEm={stored?.analisado_em ?? null}
               loading={loading}
-              onEdit={() => setAba("odds")}
+              onEdit={() => setAba("coletar")}
               onReanalyze={analyze}
             />
           ) : (
-            <Panel title="rodar análise" badge={<Tag tone="value">Etapa 2</Tag>}>
+            <Panel title="rodar análise" badge={<Tag tone="value">Etapa 3</Tag>}>
               <div className="flex flex-col gap-3">
                 <p className="text-[0.74rem] leading-relaxed text-muted">
                   {batch.length > 0 ? (
                     <><strong className="text-fg">{batch.length}</strong> odds no lote, prontas. clique pra cruzar com o modelo e ver as apostas de valor.</>
                   ) : (
-                    <>nenhuma odd no lote — colete primeiro na <button onClick={() => setAba("odds")} className="text-value underline">Etapa 1 · Odds</button>.</>
+                    <>nenhuma odd no lote — colete primeiro na <button onClick={() => setAba("coletar")} className="text-value underline">Etapa 1 · Coletar</button>.</>
                   )}
                 </p>
                 <button onClick={analyze} disabled={loading || batch.length === 0} className="btn w-full justify-center">
@@ -387,7 +401,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   );
 }
 
-/* Barra compacta da Etapa 2: o lote vira uma linha; editar volta pra Etapa 1. */
+/* Barra compacta da Etapa 3: o lote vira uma linha; editar volta pra Etapa 1 (Coletar). */
 function BatchSummaryBar({
   count, analisadoEm, loading, onEdit, onReanalyze,
 }: {
