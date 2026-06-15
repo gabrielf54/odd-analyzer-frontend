@@ -19,6 +19,7 @@ import { RecommendationCard } from "@/components/RecommendationCard";
 import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { SemMatchPanel } from "@/components/SemMatchPanel";
 import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
+import { DivergenceModal } from "@/components/DivergenceModal";
 import { OddsTable } from "@/components/OddsTable";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -421,6 +422,7 @@ function AutoCollect({
 }: {
   collecting: boolean; error: string; info: CollectResult | null; onCollect: () => void;
 }) {
+  const [showDiverg, setShowDiverg] = useState(false);
   return (
     <Panel title="obter odds (automático)" badge={<Tag tone="value">recomendado</Tag>}>
       <p className="mb-3 text-[0.72rem] leading-relaxed text-muted">
@@ -450,18 +452,18 @@ function AutoCollect({
             {info.linhas_rejeitadas ? ` · ${info.linhas_rejeitadas} recusadas` : ""}
           </p>
           {info.divergencias.length > 0 && (
-            <details className="mt-1">
-              <summary className="cursor-pointer text-warn">
-                ⚠ {info.divergencias.length} divergência(s) entre casas — revisar
-              </summary>
-              <ul className="mt-1 list-disc pl-4 text-[0.68rem] text-faint">
-                {info.divergencias.slice(0, 6).map((d, i) => (
-                  <li key={i}>{d.entidade} · {d.market_type} {d.linha} · {d.spread_pp}pp</li>
-                ))}
-              </ul>
-            </details>
+            <button
+              type="button"
+              onClick={() => setShowDiverg(true)}
+              className="mt-1.5 inline-flex items-center gap-1 rounded-sm border border-warn/40 px-2 py-0.5 text-[0.66rem] text-warn transition-colors hover:bg-warn/10"
+            >
+              ⚠ {info.divergencias.length} divergência(s) — investigar
+            </button>
           )}
         </div>
+      )}
+      {showDiverg && info && (
+        <DivergenceModal divergencias={info.divergencias} onClose={() => setShowDiverg(false)} />
       )}
     </Panel>
   );

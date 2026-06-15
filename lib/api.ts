@@ -49,7 +49,10 @@ export interface CollectResult {
   casas: { book: string; ok: boolean; n: number; erro?: string }[];
   n_por_casa: number;
   n_line_shop: number;
-  divergencias: { entidade: string; market_type: string; linha: number; spread_pp: number; motivo: string }[];
+  divergencias: {
+    entidade: string; market_type: string; linha: number; spread_pp: number; motivo: string;
+    books: { book: string; impl: number }[]; // implícita (1/odd_over) por casa — p/ o modal investigativo
+  }[];
   linhas_rejeitadas: number;
   gravadas: number;
 }
