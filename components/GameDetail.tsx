@@ -20,6 +20,8 @@ import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { SemMatchPanel } from "@/components/SemMatchPanel";
 import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { OddsTable } from "@/components/OddsTable";
+import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
 type Aba = "odds" | "analise";
@@ -27,6 +29,8 @@ type Aba = "odds" | "analise";
 export function GameDetail({ match, onBack }: { match: Match; onBack: () => void }) {
   const time = localTime(match.data);
   const eventId = String(match.id);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // Abre na aba "análise" se já existe resultado em cache (reabrir jogo analisado);
   // senão começa na Etapa 1 (odds). loadResult é síncrono (localStorage).
@@ -121,22 +125,30 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     deleteOdds(eventId).catch(() => { /* limpeza local já feita; ignora falha de rede */ });
   }
 
-  // Botão "limpar todas" da OddsTable: apaga TODAS as odds do jogo no banco. Destrutivo
-  // → confirma antes; espera a remoção e só então zera a tela (evita o "fantasma" de
-  // odd que já sumiu do banco mas ficou no cache local).
+  // Botão "limpar todas" da OddsTable: apaga TODAS as odds do jogo no banco. Abre o
+  // modal de confirmação universal (destrutivo → tom "bad"); só apaga se confirmar.
+  // Espera a remoção e só então zera a tela (evita o "fantasma" de odd que já sumiu
+  // do banco mas ficou no cache local). Resultado vai pro toast.
   async function clearAllOdds() {
-    if (!window.confirm("Apagar TODAS as odds deste jogo? Não dá pra desfazer.")) return;
+    const ok = await confirm({
+      title: "Apagar todas as odds?",
+      message: "Isso remove TODAS as odds deste jogo do banco. Não dá pra desfazer.",
+      confirmLabel: "Apagar tudo",
+      tone: "bad",
+    });
+    if (!ok) return;
     setError(""); setCollectError("");
     try {
       await deleteOdds(eventId);
     } catch (e) {
-      if (mountedRef.current) setCollectError(e instanceof Error ? e.message : "erro ao apagar odds");
+      toast.error(e instanceof Error ? e.message : "erro ao apagar odds");
       return;
     }
     if (!mountedRef.current) return;
     setBatch([]); setStored(null); setAliasNote([]); setCollectInfo(null);
     clearStored(eventId);
     setOddsVersion((v) => v + 1);
+    toast.success("Todas as odds deste jogo foram apagadas.");
   }
 
   async function autoCollect() {

@@ -40,6 +40,55 @@ Para um jogo escolhido, o sistema compara a **probabilidade do nosso modelo** (c
 
 - **Todo botão tem `cursor: pointer`.** Garantido global em `app/globals.css` (`button:not(:disabled) { cursor: pointer !important }` — o `!important` é necessário porque no Tailwind v4 o preflight vence a regra em botão simples). Botão desabilitado usa `not-allowed` (o `:not(:disabled)` preserva isso). **Não repetir `cursor-pointer` por botão.** Exceção: elementos clicáveis que não são `<button>` (ex.: `<summary>`) precisam da classe explícita.
 
+## Padrões de UI compartilhados (universais — usar SEMPRE estes)
+
+> Dois provedores montados **uma única vez** no `app/layout.tsx`, disponíveis em
+> **qualquer client component**. **NÃO** usar `alert()`/`confirm()` nativos do navegador,
+> nem repetir mensagem de aviso/confirmação dentro do próprio componente. Estes são o
+> padrão do projeto — toda notificação e toda confirmação passam por eles.
+
+### Toast — aviso transitório (`components/Toast.tsx`)
+
+Notificação que aparece no canto inferior-direito e some sozinha. Para **feedback** de
+ação (deu certo / deu erro / aviso).
+
+```tsx
+"use client";
+import { useToast } from "@/components/Toast";
+
+const toast = useToast();
+toast.success("Odds salvas.");
+toast.error("Falhou ao salvar.");
+toast.warn("Mercado em validação.");
+toast.info("Coletando nas casas…");
+// avançado: toast.show("msg", { tone: "cyan", duration: 6000 });
+```
+
+Tons casam com o tema: `value` (verde) · `bad` (vermelho) · `warn` (âmbar) · `cyan`.
+
+### Confirm — modal de confirmação em foco (`components/ConfirmDialog.tsx`)
+
+Modal centrado, com overlay, para **ações destrutivas/irreversíveis**. Promessa que
+resolve `true`/`false`. ESC ou clicar fora = cancela; Enter = confirma.
+
+```tsx
+"use client";
+import { useConfirm } from "@/components/ConfirmDialog";
+
+const confirm = useConfirm();
+const ok = await confirm({
+  title: "Apagar todas as odds?",
+  message: "Isso não pode ser desfeito.",
+  confirmLabel: "Apagar tudo",
+  tone: "bad", // "bad" = destrutivo (vermelho) · "value" = normal (verde, default)
+});
+if (!ok) return;
+// ... segue a ação
+```
+
+**Regra:** qualquer ação que apaga/sobrescreve dado usa `useConfirm` (não `window.confirm`);
+qualquer resultado de ação que valha avisar usa `useToast`.
+
 ## Rodar
 
 - Backend primeiro: no repo `odd-analyzer`, `npm run dev` na raiz (porta 3001).

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/Toast";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -22,6 +24,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" className={`${display.variable} ${mono.variable}`}>
       <body className="min-h-screen">
+        <ToastProvider>
+        <ConfirmProvider>
         <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
             <div className="flex items-center gap-2.5">
@@ -49,6 +53,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <br className="sm:hidden" /> nunca se aposta por “probabilidade alta”. a ia explica, nunca inventa o número.
           </div>
         </footer>
+        </ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );
