@@ -21,6 +21,7 @@ import { SemMatchPanel } from "@/components/SemMatchPanel";
 import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { DivergenceModal } from "@/components/DivergenceModal";
 import { OddsTable } from "@/components/OddsTable";
+import { UnifiedOddsTable } from "@/components/UnifiedOddsTable";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
@@ -231,8 +232,13 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
         <div className="flex flex-col gap-4">
           <AutoCollect collecting={collecting} error={collectError} info={collectInfo} onCollect={autoCollect} />
 
-          {/* Tela investigativa: todas as odds no banco, com filtro e edição manual. */}
-          <Panel title="odds carregadas (investigar / editar)" badge={<Tag tone="muted">banco</Tag>}>
+          {/* Espelho canônico: 1 aposta por linha, melhor preço — o que a ANÁLISE considera. */}
+          <Panel title="odds unificadas (o que a análise considera)" badge={<Tag tone="value">decisão</Tag>}>
+            <UnifiedOddsTable eventId={eventId} reloadSignal={oddsVersion} />
+          </Panel>
+
+          {/* Log cru: todas as casas/grafias no banco, com filtro e edição manual. */}
+          <Panel title="odds cruas (log · todas as casas)" badge={<Tag tone="muted">log</Tag>}>
             <OddsTable eventId={eventId} onChange={reloadBatch} reloadSignal={oddsVersion} onClearAll={clearAllOdds} />
           </Panel>
 
