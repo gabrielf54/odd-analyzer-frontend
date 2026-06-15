@@ -19,6 +19,8 @@ function Collect() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState("");
+  // Modo foco: oculta as colunas de ligas e jogos p/ expandir o jogo aberto.
+  const [railsHidden, setRailsHidden] = useState(false);
 
   // Abas abertas (estilo VSCode): lista de jogos persistida; a aba ativa é a URL.
   const [tabs, setTabs] = useState<Match[]>([]);
@@ -80,26 +82,37 @@ function Collect() {
 
   return (
     <div className="flex gap-3">
-      {/* coluna 1 — ligas */}
-      <aside className="w-[150px] shrink-0 lg:sticky lg:top-24 lg:self-start">
-        <span className="overline mb-2 block">ligas</span>
-        <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
-      </aside>
+      {!railsHidden && (
+        <>
+          {/* coluna 1 — ligas */}
+          <aside className="w-[150px] shrink-0 lg:sticky lg:top-24 lg:self-start">
+            <LeagueRail leagues={leagues} active={leagueId} onSelect={setLeague} loading={loadingLeagues} />
+          </aside>
 
-      {/* coluna 2 — jogos da liga selecionada */}
-      <aside className="w-[180px] shrink-0 lg:sticky lg:top-24 lg:self-start">
-        <span className="overline mb-2 block">jogos</span>
-        <MatchRail
-          matches={matches}
-          activeId={matchId}
-          onSelect={openMatch}
-          loading={loadingMatches}
-          empty={leagueId ? "sem jogos não iniciados" : "escolha uma liga"}
-        />
-      </aside>
+          {/* coluna 2 — jogos da liga selecionada */}
+          <aside className="w-[180px] shrink-0 lg:sticky lg:top-24 lg:self-start">
+            <span className="overline mb-2 block">jogos</span>
+            <MatchRail
+              matches={matches}
+              activeId={matchId}
+              onSelect={openMatch}
+              loading={loadingMatches}
+              empty={leagueId ? "sem jogos não iniciados" : "escolha uma liga"}
+            />
+          </aside>
+        </>
+      )}
 
       {/* coluna 3 — conteúdo (abas + jogo aberto) */}
       <section className="flex min-w-0 flex-1 flex-col gap-4">
+        <button
+          onClick={() => setRailsHidden((v) => !v)}
+          className="overline self-start transition-colors hover:text-fg"
+          title={railsHidden ? "mostrar ligas e jogos" : "ocultar ligas e jogos (foco no jogo)"}
+        >
+          {railsHidden ? "☰ mostrar ligas e jogos" : "⟨ ocultar listas · foco"}
+        </button>
+
         <GameTabs
           tabs={tabs}
           activeId={matchId}
