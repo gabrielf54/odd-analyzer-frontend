@@ -47,6 +47,10 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   const [collecting, setCollecting] = useState(false);
   const [collectError, setCollectError] = useState("");
   const [collectInfo, setCollectInfo] = useState<CollectResult | null>(null);
+  // Sobe a cada mutação de odds feita FORA da OddsTable (coletar/limpar/adicionar) →
+  // a OddsTable usa como sinal pra refazer o fetch e atualizar a lista na hora, sem
+  // o usuário precisar dar refresh na página.
+  const [oddsVersion, setOddsVersion] = useState(0);
 
   // Guarda contra setState depois de desmontar: ao trocar de aba (jogo) no meio de um
   // request assíncrono, os handlers não tocam mais o estado da instância morta. A
@@ -101,6 +105,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
       const rows = await getOdds(eventId);
       if (!mountedRef.current) return;
       setBatch(oddsRowsToBatch(rows));
+      setOddsVersion((v) => v + 1);
       setAliasNote(aliasDiffs(lines));
       setPaste("");
     } catch (e) {
@@ -112,7 +117,26 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     setBatch([]); setStored(null); setError(""); setAliasNote([]);
     setCollectInfo(null); setCollectError("");
     clearStored(eventId);
+    setOddsVersion((v) => v + 1);
     deleteOdds(eventId).catch(() => { /* limpeza local já feita; ignora falha de rede */ });
+  }
+
+  // Botão "limpar todas" da OddsTable: apaga TODAS as odds do jogo no banco. Destrutivo
+  // → confirma antes; espera a remoção e só então zera a tela (evita o "fantasma" de
+  // odd que já sumiu do banco mas ficou no cache local).
+  async function clearAllOdds() {
+    if (!window.confirm("Apagar TODAS as odds deste jogo? Não dá pra desfazer.")) return;
+    setError(""); setCollectError("");
+    try {
+      await deleteOdds(eventId);
+    } catch (e) {
+      if (mountedRef.current) setCollectError(e instanceof Error ? e.message : "erro ao apagar odds");
+      return;
+    }
+    if (!mountedRef.current) return;
+    setBatch([]); setStored(null); setAliasNote([]); setCollectInfo(null);
+    clearStored(eventId);
+    setOddsVersion((v) => v + 1);
   }
 
   async function autoCollect() {
@@ -122,6 +146,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
       const rows = await getOdds(eventId);
       if (!mountedRef.current) return;
       setBatch(oddsRowsToBatch(rows));
+      setOddsVersion((v) => v + 1);
       setCollectInfo(r);
     } catch (e) {
       if (mountedRef.current) setCollectError(e instanceof Error ? e.message : "erro ao coletar odds");
@@ -195,7 +220,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
           {/* Tela investigativa: todas as odds no banco, com filtro e edição manual. */}
           <Panel title="odds carregadas (investigar / editar)" badge={<Tag tone="muted">banco</Tag>}>
-            <OddsTable eventId={eventId} onChange={reloadBatch} />
+            <OddsTable eventId={eventId} onChange={reloadBatch} reloadSignal={oddsVersion} onClearAll={clearAllOdds} />
           </Panel>
 
           {batch.length > 0 && (

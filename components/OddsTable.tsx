@@ -10,7 +10,9 @@ import { marketNoun } from "@/lib/detailText";
 
 const blank = (): ManualOddsLine => ({ market_type: "", entidade: "", linha: 0.5, odd_over: 0, odd_under: null, book: "manual" });
 
-export function OddsTable({ eventId, onChange }: { eventId: string; onChange?: () => void }) {
+export function OddsTable({ eventId, onChange, reloadSignal, onClearAll }: {
+  eventId: string; onChange?: () => void; reloadSignal?: number; onClearAll?: () => void;
+}) {
   const [rows, setRows] = useState<OddsRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,8 +31,11 @@ export function OddsTable({ eventId, onChange }: { eventId: string; onChange?: (
     finally { setLoading(false); }
   }
 
-  // Carga inicial: fetch direto no efeito; setState só no callback assíncrono
-  // (não síncrono no corpo do efeito). loading começa true via useState.
+  // Carga inicial + recargas externas: fetch direto no efeito; setState só no callback
+  // assíncrono (não síncrono no corpo do efeito). loading começa true via useState.
+  // `reloadSignal` muda quando o GameDetail mexe nas odds (coleta automática, limpar
+  // tudo, adicionar manual) → a tabela refaz o fetch e troca as linhas em silêncio,
+  // sem precisar de refresh na página.
   useEffect(() => {
     let alive = true;
     getOdds(eventId)
@@ -38,7 +43,7 @@ export function OddsTable({ eventId, onChange }: { eventId: string; onChange?: (
       .catch((e) => { if (alive) setError(e instanceof Error ? e.message : "erro ao carregar odds"); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [eventId]);
+  }, [eventId, reloadSignal]);
 
   const markets = useMemo(() => marketOptions(rows), [rows]);
   const books = useMemo(() => bookOptions(rows), [rows]);
@@ -93,7 +98,12 @@ export function OddsTable({ eventId, onChange }: { eventId: string; onChange?: (
 
       <div className="flex items-center justify-between text-[0.66rem] text-faint">
         <span>{shown.length} de {rows.length} odds</span>
-        <button className="text-value" onClick={() => setAdding(blank())}>＋ adicionar odd</button>
+        <span className="flex items-center gap-3">
+          {onClearAll && rows.length > 0 && (
+            <button className="transition-colors hover:text-bad" onClick={onClearAll}>🗑 limpar todas</button>
+          )}
+          <button className="text-value" onClick={() => setAdding(blank())}>＋ adicionar odd</button>
+        </span>
       </div>
 
       {adding && (
