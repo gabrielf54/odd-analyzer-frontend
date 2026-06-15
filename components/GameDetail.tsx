@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getOddsPrompt, postAnalyzeManual, postCrosswalk,
-  getOdds, getAnalysis, saveOdds, deleteOdds, coletarOdds, type CollectResult,
+  getOdds, getAnalysis, saveOdds, deleteOdds, deleteAnalise, coletarOdds, type CollectResult,
 } from "@/lib/api";
 import { oddsRowsToBatch } from "@/lib/oddsRows";
 import type { Match, ManualOddsLine, Candidate } from "@/lib/types";
@@ -22,6 +22,7 @@ import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { DivergenceModal } from "@/components/DivergenceModal";
 import { OddsTable } from "@/components/OddsTable";
 import { UnifiedOddsTable } from "@/components/UnifiedOddsTable";
+import { StaleAnalysisModal } from "@/components/StaleAnalysisModal";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
@@ -57,6 +58,9 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
   // a OddsTable usa como sinal pra refazer o fetch e atualizar a lista na hora, sem
   // o usuário precisar dar refresh na página.
   const [oddsVersion, setOddsVersion] = useState(0);
+  // Aviso bloqueante: mexeu numa odd com análise salva → escolher re-analisar ou excluir.
+  const [staleOpen, setStaleOpen] = useState(false);
+  const [staleBusy, setStaleBusy] = useState(false);
 
   // Guarda contra setState depois de desmontar: ao trocar de aba (jogo) no meio de um
   // request assíncrono, os handlers não tocam mais o estado da instância morta. A
@@ -154,6 +158,29 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     toast.success("Odds e análise deste jogo foram apagadas.");
   }
 
+  // Mexeu numa odd (editar/adicionar/remover na tabela crua) E existe análise salva → ela
+  // ficou velha. Recarrega o lote e ABRE o aviso bloqueante (re-analisar ou excluir).
+  async function onOddsTableChange() {
+    await reloadBatch();
+    if (result) setStaleOpen(true);
+  }
+  async function reanalyzeStale() {
+    setStaleBusy(true);
+    try { await analyze(); }            // recalcula com as odds atuais e vai pra Etapa 3
+    finally { if (mountedRef.current) { setStaleBusy(false); setStaleOpen(false); } }
+  }
+  async function deleteStaleAnalysis() {
+    setStaleBusy(true);
+    try {
+      await deleteAnalise(eventId);
+      if (mountedRef.current) { setStored(null); clearStored(eventId); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "erro ao excluir análise");
+    } finally {
+      if (mountedRef.current) { setStaleBusy(false); setStaleOpen(false); }
+    }
+  }
+
   async function autoCollect() {
     setCollectError(""); setCollecting(true);
     try {
@@ -235,7 +262,7 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
           {/* Log cru: todas as casas/grafias no banco, com filtro e edição manual. */}
           <Panel title="odds cruas (log · todas as casas)" badge={<Tag tone="muted">log</Tag>}>
-            <OddsTable eventId={eventId} onChange={reloadBatch} reloadSignal={oddsVersion} onClearAll={clearAllOdds} />
+            <OddsTable eventId={eventId} onChange={onOddsTableChange} reloadSignal={oddsVersion} onClearAll={clearAllOdds} />
           </Panel>
 
           {batch.length > 0 && (
@@ -398,6 +425,10 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
       )}
 
       <PlayerDetailDrawer candidate={detail} onClose={() => setDetail(null)} />
+
+      {staleOpen && (
+        <StaleAnalysisModal busy={staleBusy} onReanalyze={reanalyzeStale} onDelete={deleteStaleAnalysis} />
+      )}
     </div>
   );
 }

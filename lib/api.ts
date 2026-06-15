@@ -82,6 +82,10 @@ export const getOddsUnificadas = (eventId: string | number) =>
 export const getAnalysis = (eventId: string | number) =>
   req<{ result: ManualAnalysisResult; analisado_em: string } | null>(`/jogos/${eventId}/analise`);
 
+// Apaga SÓ a análise salva (odds intactas) — botão "Excluir análise" do aviso de stale.
+export const deleteAnalise = (eventId: string | number) =>
+  req<{ ok: true }>(`/jogos/${eventId}/analise`, { method: "DELETE" });
+
 export const saveOdds = (body: ManualAnalyzeBody) =>
   req<{ salvas: number; linhas_rejeitadas: LinhaRejeitada[] }>("/odds", { method: "POST", body: JSON.stringify(body) });
 
