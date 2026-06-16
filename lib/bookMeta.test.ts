@@ -11,6 +11,14 @@ describe("bookMeta", () => {
   it("superbet vira sigla SUPERBET", () => {
     expect(bookMeta("superbet").sigla).toBe("SUPERBET");
   });
+  it("stake vira sigla STAKE (casa automática, não fallback cinza)", () => {
+    expect(bookMeta("stake").sigla).toBe("STAKE");
+    expect(bookMeta("stake").label).toBe("Stake");
+  });
+  it("betano vira sigla BETANO (5ª casa automática, não fallback cinza)", () => {
+    expect(bookMeta("betano").sigla).toBe("BETANO");
+    expect(bookMeta("betano").label).toBe("Betano");
+  });
   it("manual vira sigla MAN", () => {
     expect(bookMeta("manual").sigla).toBe("MAN");
   });

@@ -9,6 +9,8 @@ const KNOWN: Record<string, BookMeta> = {
   kto:         { sigla: "KTO",         label: "KTO",         dotClass: "bg-[#25e08a]", textClass: "text-[#25e08a]" },
   betnacional: { sigla: "BETNACIONAL", label: "Betnacional", dotClass: "bg-[#3b9dff]", textClass: "text-[#3b9dff]" },
   superbet:    { sigla: "SUPERBET",    label: "Superbet",    dotClass: "bg-[#ff5a5a]", textClass: "text-[#ff5a5a]" },
+  stake:       { sigla: "STAKE",       label: "Stake",       dotClass: "bg-[#00e0c6]", textClass: "text-[#00e0c6]" },
+  betano:      { sigla: "BETANO",      label: "Betano",      dotClass: "bg-[#ff6a00]", textClass: "text-[#ff6a00]" },
   manual:      { sigla: "MAN",         label: "Manual",      dotClass: "bg-[#8a8a8a]", textClass: "text-[#8a8a8a]" },
 };
 
