@@ -3,7 +3,7 @@ import type {
   League, Match,
   ManualOddsLine, ManualAnalysisResult,
   OddsRow, UnifiedOddsRow, LinhaRejeitada,
-  ClvResult, SchedulerStatus,
+  ClvResult, ClvPorMercadoResult, SchedulerStatus,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5926";
@@ -127,6 +127,9 @@ export const postCrosswalk = (nome_casa: string, player_id: string) =>
 // não contamina. Acumula conforme você coleta ao longo do dia. ─────
 export const getClv = (eventId: string | number) =>
   req<ClvResult>(`/jogos/${eventId}/clv`);
+
+// CLV AGREGADO por mercado, entre TODOS os jogos do paper_ledger (CLV médio + IC + n).
+export const getClvPorMercado = () => req<ClvPorMercadoResult>("/clv/por-mercado");
 
 // ───── Agendador 24h (só-leitura): jogos agendados + diário de bordo ─────
 export const getSchedulerStatus = () => req<SchedulerStatus>("/scheduler/status");

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { saveOdd, removeOdd } from "./api";
+import { saveOdd, removeOdd, getClvPorMercado } from "./api";
 
 function mockFetchOk() {
   const fn = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ salvas: 1, linhas_rejeitadas: [] }) }));
@@ -20,6 +20,20 @@ describe("saveOdd", () => {
     expect(body.odds).toHaveLength(1);
     expect(body.odds[0].entidade).toBe("Saka");
     expect(typeof body.coletado_em).toBe("string");
+  });
+});
+
+describe("getClvPorMercado", () => {
+  beforeEach(() => vi.unstubAllGlobals());
+  it("faz GET /clv/por-mercado e devolve o corpo", async () => {
+    const corpo = { por_mercado: [{ market_type: "sot", n: 3, clv_medio: 0.05, lo: 0.01, hi: 0.09 }], limitacao: "x" };
+    const fn = vi.fn(async () => ({ ok: true, status: 200, json: async () => corpo }));
+    vi.stubGlobal("fetch", fn);
+    const out = await getClvPorMercado();
+    const [url] = fn.mock.calls[0] as unknown as [string];
+    expect(String(url)).toMatch(/\/clv\/por-mercado$/);
+    expect(out.por_mercado[0].market_type).toBe("sot");
+    expect(out.limitacao).toBe("x");
   });
 });
 

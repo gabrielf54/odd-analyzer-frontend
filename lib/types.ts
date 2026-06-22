@@ -184,6 +184,19 @@ export interface ClvResult {
   resumo_por_mercado: Record<string, LineupEdge>;
 }
 
+// ───── CLV AGREGADO por mercado, entre todos os jogos (GET /clv/por-mercado) ─────
+export interface MarketClv {
+  market_type: string;
+  n: number;
+  clv_medio: number; // CLV médio entrada→fechamento
+  lo: number;        // IC 95% (bootstrap)
+  hi: number;
+}
+export interface ClvPorMercadoResult {
+  por_mercado: MarketClv[];
+  limitacao: string; // gap honesto: CLV só p/ prop com odd; edge precisa de odds 2 lados
+}
+
 // ───── Agendador 24h (GET /scheduler/status) ─────
 export interface ScheduledJob {
   event_id: string;

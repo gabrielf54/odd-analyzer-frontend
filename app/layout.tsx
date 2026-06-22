@@ -39,6 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </div>
             <nav className="ml-auto flex items-center gap-4">
               <a href="/" className="overline text-faint transition-colors hover:text-fg">jogos</a>
+              <a href="/clv" className="overline text-faint transition-colors hover:text-fg">clv</a>
               <a href="/agendador" className="overline text-faint transition-colors hover:text-fg">agendador</a>
               <span className="hidden items-center gap-2 md:flex">
                 <span className="overline">copa 2026</span>
