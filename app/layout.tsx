@@ -37,11 +37,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </span>
               <span className="overline ml-1 hidden sm:inline">value terminal</span>
             </div>
-            <span className="ml-auto hidden items-center gap-2 md:flex">
-              <span className="overline">copa 2026</span>
-              <span className="text-value">●</span>
-              <span className="overline text-faint">live<span className="blink text-value">_</span></span>
-            </span>
+            <nav className="ml-auto flex items-center gap-4">
+              <a href="/" className="overline text-faint transition-colors hover:text-fg">jogos</a>
+              <a href="/agendador" className="overline text-faint transition-colors hover:text-fg">agendador</a>
+              <span className="hidden items-center gap-2 md:flex">
+                <span className="overline">copa 2026</span>
+                <span className="text-value">●</span>
+                <span className="overline text-faint">live<span className="blink text-value">_</span></span>
+              </span>
+            </nav>
           </div>
         </header>
 

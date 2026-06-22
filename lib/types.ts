@@ -183,3 +183,27 @@ export interface ClvResult {
   apostas: ClvBet[];
   resumo_por_mercado: Record<string, LineupEdge>;
 }
+
+// ───── Agendador 24h (GET /scheduler/status) ─────
+export interface ScheduledJob {
+  event_id: string;
+  jogo: string;
+  job_type: string;   // 'collect' | 'lineup_watch'
+  mark: string | null;
+  fireAt: number;     // epoch ms
+  kickoff: string;
+}
+export interface SchedulerRun {
+  event_id?: string | null;
+  jogo?: string | null;
+  job_type: string;
+  mark?: string | null;
+  status: string;     // 'ok' | 'erro' | 'pulado'
+  detalhe?: any;
+  criado_em: string;
+}
+export interface SchedulerStatus {
+  enabled: boolean;
+  scheduled: ScheduledJob[];
+  runs: SchedulerRun[];
+}

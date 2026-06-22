@@ -3,10 +3,10 @@ import type {
   League, Match,
   ManualOddsLine, ManualAnalysisResult,
   OddsRow, UnifiedOddsRow, LinhaRejeitada,
-  ClvResult,
+  ClvResult, SchedulerStatus,
 } from "./types";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5926";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(`${API}${path}`, {
@@ -127,3 +127,6 @@ export const postCrosswalk = (nome_casa: string, player_id: string) =>
 // não contamina. Acumula conforme você coleta ao longo do dia. ─────
 export const getClv = (eventId: string | number) =>
   req<ClvResult>(`/jogos/${eventId}/clv`);
+
+// ───── Agendador 24h (só-leitura): jogos agendados + diário de bordo ─────
+export const getSchedulerStatus = () => req<SchedulerStatus>("/scheduler/status");
