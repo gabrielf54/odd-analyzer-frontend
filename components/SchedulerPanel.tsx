@@ -47,9 +47,10 @@ export function SchedulerPanel() {
           : <Tag tone="muted">desligado</Tag>}
       >
         <p className="mb-3 text-[0.72rem] text-muted">
-          O robô coleta odds nos marcos de cada jogo (abertura, deriva, <strong className="text-fg">salto
-          da escalação</strong>, fechamento), loga previsões de gols/vitória e liquida os jogos terminados —
-          sozinho, sem custo. Atualiza a cada 30s.
+          Depois que <strong className="text-fg">você busca odds</strong> de um jogo, o robô assume e coleta
+          sozinho nos marcos seguintes (deriva, <strong className="text-fg">salto da escalação</strong>,
+          fechamento) — a sua 1ª busca é a entrada do CLV. Previsões de gols/vitória e liquidação rodam para
+          todos os jogos da Copa. Sem custo. Atualiza a cada 30s.
         </p>
         {!data.enabled && (
           <p className="text-[0.72rem] text-faint">
