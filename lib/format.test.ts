@@ -1,5 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { friendlyLine, lineLabel, displayName, vitoriaOutcome, evToPct, riscoLabel, friendlyRejection } from "./format";
+import { friendlyLine, marketLabelPt, lineLabel, displayName, vitoriaOutcome, evToPct, riscoLabel, friendlyRejection } from "./format";
+
+describe("marketLabelPt", () => {
+  it("traduz o market_type pro nome por extenso (sem o limiar)", () => {
+    expect(marketLabelPt("sot")).toBe("chutes a gol");
+    expect(marketLabelPt("desarmes")).toBe("desarmes");
+  });
+  it("faltas diz 'cometidas' (a casa liquida fouls, não as sofridas)", () => {
+    expect(marketLabelPt("faltas")).toBe("faltas cometidas");
+  });
+  it("mercado desconhecido cai no próprio key", () => {
+    expect(marketLabelPt("xpto")).toBe("xpto");
+  });
+});
 
 describe("friendlyLine", () => {
   it("converte over X.5 em 'N+' com o mercado por extenso", () => {

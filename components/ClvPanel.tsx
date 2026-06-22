@@ -4,14 +4,9 @@ import { useEffect, useState } from "react";
 import { getClv } from "@/lib/api";
 import type { ClvResult, ClvBet, LineupEdge } from "@/lib/types";
 import { fmtClv, timingText } from "@/lib/clv";
-import { friendlyLine } from "@/lib/format";
+import { friendlyLine, marketLabelPt } from "@/lib/format";
 import { localTime } from "@/lib/date";
 import { Panel, Tag, ErrorBox } from "@/components/ui";
-
-const MERCADO_PT: Record<string, string> = {
-  sot: "chutes a gol", finalizacoes: "finalizações", desarmes: "desarmes",
-  faltas: "faltas", escanteios: "escanteios", gols: "gols", vitoria: "resultado",
-};
 
 /** Cor do número pelo sinal do CLV (verde = a meu favor; vermelho = contra). */
 function tone(x: number | null): string {
@@ -71,7 +66,7 @@ function MarketSummary({ mk, edge }: { mk: string; edge: LineupEdge }) {
   return (
     <div className="rounded-sm border border-line bg-panel-2 p-3">
       <div className="flex items-center justify-between">
-        <span className="overline">{MERCADO_PT[mk] ?? mk}</span>
+        <span className="overline">{marketLabelPt(mk)}</span>
         {sinal && <Tag tone="value">sinal de timing</Tag>}
       </div>
       <div className={`mono mt-1 text-lg font-semibold tabular-nums ${tone(edge.media)}`}>

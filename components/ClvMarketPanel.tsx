@@ -4,14 +4,9 @@ import { useEffect, useState } from "react";
 import { getClvPorMercado } from "@/lib/api";
 import type { ClvPorMercadoResult, MarketClv } from "@/lib/types";
 import { fmtClv } from "@/lib/clv";
+import { marketLabelPt } from "@/lib/format";
 import { clvConfidence } from "@/lib/clvMarket";
 import { Panel, Tag, ErrorBox } from "@/components/ui";
-
-const MERCADO_PT: Record<string, string> = {
-  sot: "chutes a gol", finalizacoes: "finalizações", desarmes: "desarmes",
-  faltas: "faltas", escanteios: "escanteios", gols: "gols", vitoria: "resultado",
-  passes: "passes",
-};
 
 function tone(t: "value" | "bad" | "muted"): string {
   return t === "value" ? "text-value" : t === "bad" ? "text-bad" : "text-muted";
@@ -23,8 +18,8 @@ function MarketRow({ m }: { m: MarketClv }) {
   return (
     <div className="rounded-sm border border-line bg-panel-2 p-3">
       <div className="flex items-center justify-between">
-        <span className="overline">{MERCADO_PT[m.market_type] ?? m.market_type}</span>
-        <Tag tone={c.tone === "value" ? "value" : c.tone === "bad" ? "bad" : "muted"}>{c.selo}</Tag>
+        <span className="overline">{marketLabelPt(m.market_type)}</span>
+        <Tag tone={c.tone}>{c.selo}</Tag>
       </div>
       <div className={`mono mt-1 text-2xl font-semibold tabular-nums leading-none ${tone(c.tone)}`}>
         {fmtClv(m.clv_medio)}
