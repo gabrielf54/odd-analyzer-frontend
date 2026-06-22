@@ -3,6 +3,7 @@ import type {
   League, Match,
   ManualOddsLine, ManualAnalysisResult,
   OddsRow, UnifiedOddsRow, LinhaRejeitada,
+  ClvResult,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -120,3 +121,9 @@ export const removeOdd = (
 // Liga um nome da casa a um jogador (stats-id) e persiste no crosswalk.
 export const postCrosswalk = (nome_casa: string, player_id: string) =>
   req<{ ok: boolean }>("/crosswalk", { method: "POST", body: JSON.stringify({ nome_casa, player_id }) });
+
+// ───── CLV / movimento de linha (DERIVADO do histórico de odds, segmentado pela
+// escalação). Read-only: o backend calcula dos snapshots — coletar odds várias vezes
+// não contamina. Acumula conforme você coleta ao longo do dia. ─────
+export const getClv = (eventId: string | number) =>
+  req<ClvResult>(`/jogos/${eventId}/clv`);

@@ -99,6 +99,17 @@ export interface SemMatch {
   candidatos: { id: string; name: string; confianca: number }[];
 }
 
+// Jogador casado SOZINHO com confiança intermediária [0.75,0.85): o sistema ligou,
+// mas mostra "liguei sozinho — confira" pro operador confirmar ou corrigir.
+export interface AutoLigado {
+  nome_casa: string;
+  market_type: string;
+  player_id: string;
+  player_name: string;
+  confianca: number;
+  candidatos: { id: string; name: string; confianca: number }[];
+}
+
 // Linha que a validação do backend recusou (não entra no money-path).
 export interface LinhaRejeitada { linha_crua: unknown; motivo: string; }
 
@@ -107,6 +118,8 @@ export interface ManualAnalysisResult {
   candidatos: Candidate[];
   reprovados: RejectedCandidate[];
   jogadores_sem_match: SemMatch[];
+  // Opcional: análises salvas ANTES desta feature não têm o campo (retrocompat).
+  auto_ligados?: AutoLigado[];
   linhas_rejeitadas: LinhaRejeitada[];
   ia: ManualIa;
 }
@@ -140,3 +153,33 @@ export interface UnifiedOddsRow {
   coletado_em?: string;
 }
 
+
+// ───── CLV / movimento de linha (GET /jogos/:id/clv) — espelha o backend ─────
+export interface ClvSegments {
+  pre_escalacao: number | null;
+  salto_escalacao: number | null;
+  pos_escalacao: number | null;
+  total: number | null;
+  marcos: {
+    entrada_em: string | null;
+    escalacao_em: string | null;
+    kickoff: string;
+    entrada_odd: number | null;
+    fechamento_odd: number | null;
+  };
+}
+export interface LineupEdge { media: number; lo: number; hi: number; n: number; }
+export interface ClvBet {
+  jogador: string;
+  player_id: string | null;
+  market_type: string;
+  linha: number;
+  segmentos: ClvSegments;
+  pre_lineup: boolean;
+  recomendacao: "apostar_pre" | "sem_sinal";
+}
+export interface ClvResult {
+  kickoff: string | null;
+  apostas: ClvBet[];
+  resumo_por_mercado: Record<string, LineupEdge>;
+}

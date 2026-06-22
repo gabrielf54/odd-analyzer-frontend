@@ -18,16 +18,18 @@ import { CandidatesByPlayer } from "@/components/CandidatesByPlayer";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { DiagnosticsPanel } from "@/components/DiagnosticsPanel";
 import { SemMatchPanel } from "@/components/SemMatchPanel";
+import { AutoLinkedPanel } from "@/components/AutoLinkedPanel";
 import { PlayerDetailDrawer } from "@/components/PlayerDetailDrawer";
 import { DivergenceModal } from "@/components/DivergenceModal";
 import { OddsTable } from "@/components/OddsTable";
 import { UnifiedOddsTable } from "@/components/UnifiedOddsTable";
 import { StaleAnalysisModal } from "@/components/StaleAnalysisModal";
+import { ClvPanel } from "@/components/ClvPanel";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Panel, Field, Tag, ErrorBox } from "@/components/ui";
 
-type Aba = "coletar" | "unificar" | "analise";
+type Aba = "coletar" | "unificar" | "analise" | "clv";
 
 export function GameDetail({ match, onBack }: { match: Match; onBack: () => void }) {
   const time = localTime(match.data);
@@ -226,6 +228,19 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
     }
   }
 
+  // Vincula VÁRIOS de uma vez: N crosswalks (POST baratos) + 1 só re-análise (cara).
+  // Antes era 1 clique = 1 re-análise; com muitos sem-match isso eram N requests pesadas.
+  async function linkPlayersMany(pares: { nomeCasa: string; playerId: string }[]) {
+    if (pares.length === 0) return;
+    try {
+      for (const p of pares) await postCrosswalk(p.nomeCasa, p.playerId);
+      if (!mountedRef.current) return;
+      await analyze();
+    } catch (e) {
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "erro ao vincular jogadores");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <button onClick={onBack} className="overline self-start transition-colors hover:text-fg">
@@ -241,14 +256,14 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
       {/* Abas: Etapa 1 (coletar) / Etapa 2 (unificar) / Etapa 3 (análise) — troca livre. */}
       <div className="flex items-stretch border-b border-line">
-        {(["coletar", "unificar", "analise"] as const).map((t) => (
+        {(["coletar", "unificar", "analise", "clv"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setAba(t)}
             className={`relative px-4 py-2 text-[0.72rem] transition-colors ${aba === t ? "text-value" : "text-faint hover:text-muted"}`}
           >
             {aba === t && <span className="absolute inset-x-0 top-0 h-[2px] bg-value shadow-[0_0_10px_rgba(37,224,138,0.6)]" />}
-            {t === "coletar" ? "Etapa 1 · Coletar" : t === "unificar" ? "Etapa 2 · Unificar" : "Etapa 3 · Análise"}
+            {{ coletar: "Etapa 1 · Coletar", unificar: "Etapa 2 · Unificar", analise: "Etapa 3 · Análise", clv: "CLV · Linha" }[t]}
             {t === "analise" && result && <span className="ml-1.5 text-value">●</span>}
           </button>
         ))}
@@ -397,8 +412,6 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
 
           {result && (
             <div className="flex flex-col gap-4">
-              <SemMatchPanel semMatch={result.jogadores_sem_match ?? []} onLink={linkPlayer} />
-
               <div className="reveal">
                 <Panel title="aposta recomendada" glow badge={<Tag tone="muted">código decide · IA revisa</Tag>}>
                   <RecommendationCard candidates={result.candidatos} ia={result.ia} />
@@ -417,8 +430,19 @@ export function GameDetail({ match, onBack }: { match: Match; onBack: () => void
                 rejected={result.reprovados ?? []}
                 open={result.candidatos.length === 0}
               />
+
+              {/* Manutenção do casamento odd↔jogador — secundário, colapsado no fim. */}
+              <AutoLinkedPanel autoLigados={result.auto_ligados ?? []} onLink={linkPlayer} />
+
+              <SemMatchPanel semMatch={result.jogadores_sem_match ?? []} onLinkMany={linkPlayersMany} />
             </div>
           )}
+        </div>
+      )}
+
+      {aba === "clv" && (
+        <div className="flex flex-col gap-4">
+          <ClvPanel eventId={eventId} />
         </div>
       )}
 
