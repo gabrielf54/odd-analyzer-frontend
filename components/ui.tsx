@@ -7,13 +7,35 @@ export function Panel({
   children,
   className = "",
   glow = false,
+  collapsible = false,
+  defaultOpen = false,
 }: {
   title?: string;
   badge?: ReactNode;
   children: ReactNode;
   className?: string;
   glow?: boolean;
+  /* nasce fechado; clica no cabeçalho pra abrir (native <details>, sem JS). */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }) {
+  if (collapsible && title) {
+    return (
+      <details
+        className={`panel relative overflow-hidden ${glow ? "scan" : ""} ${className}`}
+        open={defaultOpen}
+      >
+        <summary className="flex select-none items-center justify-between border-b border-line-soft px-4 py-2.5 transition-colors hover:bg-panel-2">
+          <span className="overline flex items-center gap-2">
+            <span className="caret text-faint">▸</span>
+            {title}
+          </span>
+          {badge}
+        </summary>
+        <div className="p-4">{children}</div>
+      </details>
+    );
+  }
   return (
     <section
       className={`panel relative overflow-hidden ${glow ? "scan" : ""} ${className}`}

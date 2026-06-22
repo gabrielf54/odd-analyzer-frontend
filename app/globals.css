@@ -92,6 +92,12 @@ body {
   border-radius: 4px;
 }
 
+/* painel colapsável (<details>): some o marcador nativo, ▸ gira 90° ao abrir */
+details.panel > summary { cursor: pointer; list-style: none; }
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary .caret { display: inline-block; transition: transform 0.2s ease; }
+details.panel[open] > summary .caret { transform: rotate(90deg); }
+
 /* input/select de terminal */
 .input {
   width: 100%;
