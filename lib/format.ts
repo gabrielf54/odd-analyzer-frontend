@@ -12,11 +12,17 @@ const MERCADO_PT: Record<string, string> = {
   vitoria: "resultado",
 };
 
+/** Nome do mercado por extenso, pro leigo (sem o limiar). Fonte ÚNICA do mapa de rótulos —
+ * reusada por `friendlyLine` e pelos painéis (evita o map duplicar e divergir, ex.: `faltas`
+ * cometidas vs sofridas). Mercado desconhecido cai no próprio key. */
+export function marketLabelPt(marketType: string): string {
+  return MERCADO_PT[marketType] ?? marketType;
+}
+
 /** "over 2.5 desarmes" → "3+ desarmes" (rótulo de limiar da bet365, mais legível). */
 export function friendlyLine(marketType: string, linha: number): string {
   const limiar = Math.ceil(linha); // 2.5 → 3, 0.5 → 1
-  const nome = MERCADO_PT[marketType] ?? marketType;
-  return `${limiar}+ ${nome}`;
+  return `${limiar}+ ${marketLabelPt(marketType)}`;
 }
 
 /** 1X2: o candidato de vitória chega como "Time A x Time B (1|X|2)" — o sufixo é o
