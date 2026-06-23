@@ -55,8 +55,9 @@ export function ClvMarketPanel() {
         <p className="mb-3 text-[0.72rem] text-muted">
           Mostra, por mercado, se o preço <strong className="text-fg">andou a seu favor</strong> depois que
           você escolheu — você pegou uma odd melhor que a do <strong className="text-fg">fechamento</strong>
-          (a final, mais esperta de todas)? <strong className="text-value">Verde = sim, a seu favor.</strong>{" "}
-          É um sinal de que suas escolhas mais fortes antecipam o dinheiro esperto. O selo só fica confiável
+          (a final, mais esperta de todas)? <strong className="text-value">Verde = a seu favor (e o IC
+          confirma).</strong>{" "}
+          É um indício de que suas escolhas mais fortes antecipam o dinheiro esperto. O selo só fica confiável
           quando o intervalo (IC) inteiro fica de um lado do zero; cruzando o zero, ainda é ruído de amostra
           pequena.
         </p>
