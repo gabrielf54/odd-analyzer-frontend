@@ -53,16 +53,23 @@ export function ClvMarketPanel() {
     <div className="flex flex-col gap-4">
       <Panel title="CLV por mercado · todos os jogos" badge={<Tag tone="cyan">derivado do histórico</Tag>}>
         <p className="mb-3 text-[0.72rem] text-muted">
-          Mostra, por mercado, se você costuma pegar um preço <strong className="text-fg">melhor que o
-          fechamento</strong> (a odd final, mais esperta de todas) — juntando todas as suas apostas.
-          <strong className="text-value"> Verde = a seu favor.</strong> O selo só fica confiável quando o
-          intervalo (IC) inteiro fica de um lado do zero; cruzando o zero, ainda é ruído de amostra
+          Mostra, por mercado, se o preço <strong className="text-fg">andou a seu favor</strong> depois que
+          você escolheu — você pegou uma odd melhor que a do <strong className="text-fg">fechamento</strong>
+          (a final, mais esperta de todas)? <strong className="text-value">Verde = a seu favor (e o IC
+          confirma).</strong>{" "}
+          É um indício de que suas escolhas mais fortes antecipam o dinheiro esperto. O selo só fica confiável
+          quando o intervalo (IC) inteiro fica de um lado do zero; cruzando o zero, ainda é ruído de amostra
           pequena.
+        </p>
+        <p className="mb-3 rounded-sm border border-warn/30 bg-[rgba(255,177,61,0.06)] px-2.5 py-1.5 text-[0.68rem] text-muted">
+          ⚠️ Isto <strong className="text-fg">não diz quanto você ganha</strong> (EV) — só que o preço se
+          mexeu a seu favor. Pra saber o lucro por real, falta a odd do <strong className="text-fg">outro
+          lado</strong> (over + under), que hoje quase nenhuma casa entrega.
         </p>
         {data.por_mercado.length === 0 ? (
           <p className="text-[0.72rem] text-faint">
-            Ainda sem CLV — precisa de aposta com odd de entrada (props da análise manual) e retratos de
-            odds coletados ao longo do dia.
+            Ainda sem CLV — precisa de aposta já <strong className="text-fg">liquidada</strong> (jogador que
+            entrou em campo, jogo encerrado) com odd de entrada e retratos de odds ao longo do dia.
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -71,7 +78,7 @@ export function ClvMarketPanel() {
         )}
       </Panel>
 
-      <Panel title="o que isto NÃO cobre">
+      <Panel title="o que isto prova — e o que não prova">
         <p className="text-[0.72rem] text-muted">{data.limitacao}</p>
       </Panel>
     </div>
